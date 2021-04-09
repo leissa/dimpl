@@ -6,8 +6,10 @@ set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limited config" FORC
 
 set(CMAKE_CXX_STANDARD 17)
 
+find_package(Thorin REQUIRED)
+
 if (BUILD_TESTING)
-    add_subdirectory(unit)
+    add_subdirectory(unit-test)
 endif()
 
 add_subdirectory(src)

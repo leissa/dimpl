@@ -10,11 +10,12 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-add_executable(unit
+add_executable(unit-test
     test.cpp
+    lexer.cpp
 )
 
-target_link_libraries(unit gtest_main)
+target_link_libraries(unit-test gtest_main libdimpl)
 
 include(GoogleTest)
-gtest_discover_tests(unit)
+gtest_discover_tests(unit-test)
