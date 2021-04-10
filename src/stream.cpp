@@ -31,9 +31,7 @@ static std::optional<std::pair<const Ptrn*, const Ptrn*>> dissect_ptrn(const Ptr
  */
 
 Stream& Prg::stream(Stream& s) const {
-    for (auto&& stmnt : stmnts)
-        stmnt->stream(s);
-    return s;
+    return s.fmt("{\n}\n", stmnts);
 }
 
 Stream& Id::stream(Stream& s) const {
@@ -156,7 +154,7 @@ Stream& IfExpr::stream(Stream& s) const {
 }
 
 Stream& InfixExpr::stream(Stream& s) const {
-    return s.fmt("({} {} {})", lhs, Tok::tag2str((TT) tag), rhs);
+    return s.fmt("({} {} {})", lhs, Tok::tag2str((Tok::Tag) tag), rhs);
 }
 
 Stream& LambdaExpr::stream(Stream& s) const {
@@ -176,11 +174,11 @@ Stream& LambdaExpr::stream(Stream& s) const {
 }
 
 Stream& PrefixExpr::stream(Stream& s) const {
-    return s.fmt("({}{})", Tok::tag2str((TT) tag), rhs);
+    return s.fmt("({}{})", Tok::tag2str((Tok::Tag) tag), rhs);
 }
 
 Stream& PostfixExpr::stream(Stream& s) const {
-    return s.fmt("({}{})", lhs, Tok::tag2str((TT) tag));
+    return s.fmt("({}{})", lhs, Tok::tag2str((Tok::Tag) tag));
 }
 
 Stream& TupleExpr::Elem::stream(Stream& s) const {

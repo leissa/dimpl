@@ -19,7 +19,7 @@ Lexer::Lexer(Comp& comp, std::istream& is, const char* filename)
     , stream_(is)
 {
     size_t i = 0;
-#define CODE(tag, str) keys_[i++] = {TT::tag, comp.sym(str)};
+#define CODE(tag, str) keys_[i++] = {Tok::Tag::tag, comp.sym(str)};
     DIMPL_KEY(CODE)
 #undef CODE
 
@@ -116,7 +116,7 @@ Tok Lexer::lex() {
         loc_.begin = peek_pos_;
 
         // end of file
-        if (eof()) return comp().tok(loc_, TT::M_eof);
+        if (eof()) return comp().tok(loc_, Tok::Tag::M_eof);
 
         // skip whitespace
         if (accept_if(wsp, false)) {
@@ -125,67 +125,67 @@ Tok Lexer::lex() {
         }
 
         // delimiters
-        if (accept( '(')) return comp().tok(loc_, TT::D_paren_l);
-        if (accept( ')')) return comp().tok(loc_, TT::D_paren_r);
-        if (accept( '[')) return comp().tok(loc_, TT::D_bracket_l);
-        if (accept( ']')) return comp().tok(loc_, TT::D_bracket_r);
-        if (accept( '{')) return comp().tok(loc_, TT::D_brace_l);
-        if (accept( '}')) return comp().tok(loc_, TT::D_brace_r);
-        if (accept(U'«')) return comp().tok(loc_, TT::D_quote_l);
-        if (accept(U'»')) return comp().tok(loc_, TT::D_quote_r);
-        if (accept(U'‹')) return comp().tok(loc_, TT::D_angle_l);
-        if (accept(U'›')) return comp().tok(loc_, TT::D_angle_r);
+        if (accept( '(')) return comp().tok(loc_, Tok::Tag::D_paren_l);
+        if (accept( ')')) return comp().tok(loc_, Tok::Tag::D_paren_r);
+        if (accept( '[')) return comp().tok(loc_, Tok::Tag::D_bracket_l);
+        if (accept( ']')) return comp().tok(loc_, Tok::Tag::D_bracket_r);
+        if (accept( '{')) return comp().tok(loc_, Tok::Tag::D_brace_l);
+        if (accept( '}')) return comp().tok(loc_, Tok::Tag::D_brace_r);
+        if (accept(U'«')) return comp().tok(loc_, Tok::Tag::D_quote_l);
+        if (accept(U'»')) return comp().tok(loc_, Tok::Tag::D_quote_r);
+        if (accept(U'‹')) return comp().tok(loc_, Tok::Tag::D_angle_l);
+        if (accept(U'›')) return comp().tok(loc_, Tok::Tag::D_angle_r);
 
         // punctation
-        if (accept('.')) return comp().tok(loc_, TT::P_dot);
-        if (accept(',')) return comp().tok(loc_, TT::P_comma);
-        if (accept(';')) return comp().tok(loc_, TT::P_semicolon);
+        if (accept('.')) return comp().tok(loc_, Tok::Tag::P_dot);
+        if (accept(',')) return comp().tok(loc_, Tok::Tag::P_comma);
+        if (accept(';')) return comp().tok(loc_, Tok::Tag::P_semicolon);
         if (accept(':')) {
-            if (accept(':')) return comp().tok(loc_, TT::P_colon_colon);
-            return comp().tok(loc_, TT::P_colon);
+            if (accept(':')) return comp().tok(loc_, Tok::Tag::P_colon_colon);
+            return comp().tok(loc_, Tok::Tag::P_colon);
         }
 
         // backslash
         if (accept('\\')) {
-            if (accept('/')) return comp().tok(loc_, TT::B_forall);
-            return comp().tok(loc_, TT::B_lambda);
+            if (accept('/')) return comp().tok(loc_, Tok::Tag::B_forall);
+            return comp().tok(loc_, Tok::Tag::B_lambda);
         }
 
         // operators
         if (accept('=')) {
-            if (accept('=')) return comp().tok(loc_, TT::O_eq);
-            return comp().tok(loc_, TT::O_assign);
+            if (accept('=')) return comp().tok(loc_, Tok::Tag::O_eq);
+            return comp().tok(loc_, Tok::Tag::O_assign);
         }
         if (accept('<')) {
             if (accept('<')) {
-                if (accept('=')) return comp().tok(loc_, TT::O_shl_assign);
-                return comp().tok(loc_, TT::O_shl);
+                if (accept('=')) return comp().tok(loc_, Tok::Tag::O_shl_assign);
+                return comp().tok(loc_, Tok::Tag::O_shl);
             }
-            if (accept('=')) return comp().tok(loc_, TT::O_le);
-            return comp().tok(loc_, TT::O_lt);
+            if (accept('=')) return comp().tok(loc_, Tok::Tag::O_le);
+            return comp().tok(loc_, Tok::Tag::O_lt);
         }
         if (accept('>')) {
             if (accept('>')) {
-                if (accept('=')) return comp().tok(loc_, TT::O_shr_assign);
-                return comp().tok(loc_, TT::O_shr);
+                if (accept('=')) return comp().tok(loc_, Tok::Tag::O_shr_assign);
+                return comp().tok(loc_, Tok::Tag::O_shr);
             }
-            if (accept('=')) return comp().tok(loc_, TT::O_ge);
-            return comp().tok(loc_, TT::O_gt);
+            if (accept('=')) return comp().tok(loc_, Tok::Tag::O_ge);
+            return comp().tok(loc_, Tok::Tag::O_gt);
         }
         if (accept('+')) {
-            if (accept('+')) return comp().tok(loc_, TT::O_inc);
-            if (accept('=')) return comp().tok(loc_, TT::O_add_assign);
-            return comp().tok(loc_, TT::O_add);
+            if (accept('+')) return comp().tok(loc_, Tok::Tag::O_inc);
+            if (accept('=')) return comp().tok(loc_, Tok::Tag::O_add_assign);
+            return comp().tok(loc_, Tok::Tag::O_add);
         }
         if (accept('-')) {
-            if (accept('>')) return comp().tok(loc_, TT::O_arrow);
-            if (accept('-')) return comp().tok(loc_, TT::O_dec);
-            if (accept('=')) return comp().tok(loc_, TT::O_sub_assign);
-            return comp().tok(loc_, TT::O_sub);
+            if (accept('>')) return comp().tok(loc_, Tok::Tag::O_arrow);
+            if (accept('-')) return comp().tok(loc_, Tok::Tag::O_dec);
+            if (accept('=')) return comp().tok(loc_, Tok::Tag::O_sub_assign);
+            return comp().tok(loc_, Tok::Tag::O_sub);
         }
         if (accept('*')) {
-            if (accept('=')) return comp().tok(loc_, TT::O_mul_assign);
-            return comp().tok(loc_, TT::O_mul);
+            if (accept('=')) return comp().tok(loc_, Tok::Tag::O_mul_assign);
+            return comp().tok(loc_, Tok::Tag::O_mul);
         }
         if (accept('/')) {
             // Handle comments here
@@ -194,30 +194,30 @@ Tok Lexer::lex() {
                 while (!eof() && peek() != '\n') next();
                 continue;
             }
-            if (accept('='))  return comp().tok(loc_, TT::O_div_assign);
-            return comp().tok(loc_, TT::O_div);
+            if (accept('='))  return comp().tok(loc_, Tok::Tag::O_div_assign);
+            return comp().tok(loc_, Tok::Tag::O_div);
         }
         if (accept('%')) {
-            if (accept('=')) return comp().tok(loc_, TT::O_rem_assign);
-            return comp().tok(loc_, TT::O_rem);
+            if (accept('=')) return comp().tok(loc_, Tok::Tag::O_rem_assign);
+            return comp().tok(loc_, Tok::Tag::O_rem);
         }
         if (accept('&')) {
-            if (accept('&')) return comp().tok(loc_, TT::O_and_and);
-            if (accept('=')) return comp().tok(loc_, TT::O_and_assign);
-            return comp().tok(loc_, TT::O_and);
+            if (accept('&')) return comp().tok(loc_, Tok::Tag::O_and_and);
+            if (accept('=')) return comp().tok(loc_, Tok::Tag::O_and_assign);
+            return comp().tok(loc_, Tok::Tag::O_and);
         }
         if (accept('|')) {
-            if (accept('|')) return comp().tok(loc_, TT::O_or_or);
-            if (accept('=')) return comp().tok(loc_, TT::O_or_assign);
-            return comp().tok(loc_, TT::O_or);
+            if (accept('|')) return comp().tok(loc_, Tok::Tag::O_or_or);
+            if (accept('=')) return comp().tok(loc_, Tok::Tag::O_or_assign);
+            return comp().tok(loc_, Tok::Tag::O_or);
         }
         if (accept('^')) {
-            if (accept('=')) return comp().tok(loc_, TT::O_xor_assign);
-            return comp().tok(loc_, TT::O_xor);
+            if (accept('=')) return comp().tok(loc_, Tok::Tag::O_xor_assign);
+            return comp().tok(loc_, Tok::Tag::O_xor);
         }
         if (accept('!')) {
-            if (accept('=')) return comp().tok(loc_, TT::O_ne);
-            return comp().tok(loc_, TT::O_not);
+            if (accept('=')) return comp().tok(loc_, Tok::Tag::O_ne);
+            return comp().tok(loc_, Tok::Tag::O_not);
         }
         if (dec(peek()) || sgn(peek()))
             return parse_literal();
@@ -228,9 +228,9 @@ Tok Lexer::lex() {
             auto sym = comp().sym(str_);
             if (auto i = std::find_if(keys_.begin(), keys_.end(), [&](auto p) { return p.second == sym; }); i != keys_.end()) {
                 auto [tag, _] = *i;
-                return comp().tok(loc_, tag,      sym); // keyword
+                return comp().tok(loc_, tag,            sym); // keyword
             } else {
-                return comp().tok(loc_, TT::M_id, sym); // identifier
+                return comp().tok(loc_, Tok::Tag::M_id, sym); // identifier
             }
         }
 

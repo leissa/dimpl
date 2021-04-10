@@ -60,7 +60,7 @@ private:
     std::string str_;
     Loc loc_;
     Pos peek_pos_;
-    std::array<std::pair<TT, Sym>, Num_Keys> keys_;
+    std::array<std::pair<Tok::Tag, Sym>, Num_Keys> keys_;
 };
 
 }
