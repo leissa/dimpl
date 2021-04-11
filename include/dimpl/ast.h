@@ -20,6 +20,8 @@ class Scopes;
 struct Expr;
 struct Stmnt;
 
+enum class FTag { DS, Fn, Cn };
+
 namespace detail {
     template<class T> void make_ptrs(Ptrs<T>&) {}
     template<class T, class A, class... Args>
@@ -38,6 +40,10 @@ Ptrs<T> make_ptrs(Args&&... args) {
 
 //------------------------------------------------------------------------------
 
+/*
+ * base
+ */
+
 struct Node : public thorin::Streamable<Node> {
     Node(Comp& comp, Loc loc)
         : comp(comp)
@@ -50,19 +56,6 @@ struct Node : public thorin::Streamable<Node> {
 
     Loc loc;
     Comp& comp;
-};
-
-struct Prg : public Node {
-    Prg(Comp& copm, Loc loc, Ptrs<Stmnt>&& stmnts)
-        : Node(comp, loc)
-        , stmnts(std::move(stmnts))
-    {}
-
-    Stream& stream(Stream& s) const override;
-    void bind(Scopes&) const;
-    //void emit(Emitter&) const;
-
-    Ptrs<Stmnt> stmnts;
 };
 
 struct Id : public Node {
@@ -81,8 +74,33 @@ struct Id : public Node {
     Sym sym;
 };
 
-struct Item : public Node {
-    Item(Comp& comp, Loc loc, Ptr<Id>&& id, Ptr<Expr> expr)
+struct Expr : public thorin::RuntimeCast<Expr>, public Node {
+    Expr(Comp& comp, Loc loc)
+        : Node(comp, loc)
+    {}
+
+    virtual void bind(Scopes&) const = 0;
+    //virtual const thorin::Def* emit(Emitter&) const = 0;
+};
+
+struct Ptrn : public thorin::RuntimeCast<Ptrn>, public Node {
+    Ptrn(Comp& comp, Loc loc, Ptr<Expr>&& type, bool type_mandatory)
+        : Node(comp, loc)
+        , type(std::move(type))
+        , type_mandatory(type_mandatory)
+    {}
+
+    Stream& stream(Stream& s) const override;
+    virtual void bind(Scopes&) const = 0;
+    //virtual void emit(Emitter&, const thorin::Def*) const = 0;
+    //const thorin::Def* emit(Emitter&) const;
+
+    Ptr<Expr> type;
+    bool type_mandatory;
+};
+
+struct Nom : public Node {
+    Nom(Comp& comp, Loc loc, Ptr<Id>&& id, Ptr<Expr> expr)
         : Node(comp, loc)
         , id(std::move(id))
         , expr(std::move(expr))
@@ -102,25 +120,30 @@ private:
     mutable const thorin::Def* def_ = nullptr;
 };
 
-/*
- * Ptrn
- */
-
-struct Ptrn : public thorin::RuntimeCast<Ptrn>, public Node {
-    Ptrn(Comp& comp, Loc loc, Ptr<Expr>&& type, bool type_mandatory)
+struct Prg : public Node {
+    Prg(Comp& copm, Loc loc, Ptrs<Stmnt>&& stmnts)
         : Node(comp, loc)
-        , type(std::move(type))
-        , type_mandatory(type_mandatory)
+        , stmnts(std::move(stmnts))
     {}
 
     Stream& stream(Stream& s) const override;
-    virtual void bind(Scopes&) const = 0;
-    //virtual void emit(Emitter&, const thorin::Def*) const = 0;
-    //const thorin::Def* emit(Emitter&) const;
+    void bind(Scopes&) const;
+    //void emit(Emitter&) const;
 
-    Ptr<Expr> type;
-    bool type_mandatory;
+    Ptrs<Stmnt> stmnts;
 };
+
+struct CnFn {
+};
+
+/*
+ * Nom
+ */
+
+
+/*
+ * Ptrn
+ */
 
 struct ErrorPtrn : public Ptrn {
     ErrorPtrn(Comp& comp, Loc loc)
@@ -165,33 +188,78 @@ struct TuplePtrn : public Ptrn {
 };
 
 /*
- * Expr
+ * Stmnt
  */
 
-struct Expr : public thorin::RuntimeCast<Expr>, public Node {
-    Expr(Comp& comp, Loc loc)
+struct Stmnt : public thorin::RuntimeCast<Stmnt>, public Node {
+    Stmnt(Comp& comp, Loc loc)
         : Node(comp, loc)
     {}
 
     virtual void bind(Scopes&) const = 0;
-    //virtual const thorin::Def* emit(Emitter&) const = 0;
+    //virtual void emit(Emitter&) const = 0;
 };
 
+struct ExprStmnt : public Stmnt {
+    ExprStmnt(Comp& comp, Loc loc, Ptr<Expr>&& expr)
+        : Stmnt(comp, loc)
+        , expr(std::move(expr))
+    {}
+
+    Stream& stream(Stream& s) const override;
+    void bind(Scopes&) const override;
+    //void emit(Emitter&) const override;
+
+    Ptr<Expr> expr;
+};
+
+struct LetStmnt : public Stmnt {
+    LetStmnt(Comp& comp, Loc loc, Ptr<Ptrn>&& ptrn, Ptr<Expr>&& init)
+        : Stmnt(comp, loc)
+        , ptrn(std::move(ptrn))
+        , init(std::move(init))
+    {}
+
+    Stream& stream(Stream& s) const override;
+    void bind(Scopes&) const override;
+    //void emit(Emitter&) const override;
+
+    Ptr<Ptrn> ptrn;
+    Ptr<Expr> init;
+};
+
+struct NomStmnt : public Stmnt {
+    NomStmnt(Comp& comp, Loc loc, Ptr<Nom>&& nom)
+        : Stmnt(comp, loc)
+        , nom(std::move(nom))
+    {}
+
+    Stream& stream(Stream& s) const override;
+    void bind(Scopes&) const override;
+    //void emit(Emitter&) const override;
+
+    Ptr<Nom> nom;
+};
+
+/*
+ * Expr
+ */
+
 struct AppExpr : public Expr {
-    AppExpr(Comp& comp, Loc loc, Ptr<Expr>&& callee, Ptr<Expr>&& arg, bool cps)
+    AppExpr(Comp& comp, Loc loc, FTag tag, Ptr<Expr>&& callee, Ptr<Expr>&& arg)
         : Expr(comp, loc)
+        , tag(tag)
         , callee(std::move(callee))
         , arg(std::move(arg))
-        , cps(cps)
     {}
 
     Stream& stream(Stream& s) const override;
     void bind(Scopes&) const override;
     //const thorin::Def* emit(Emitter&) const override;
 
+    FTag tag;
     Ptr<Expr> callee;
     Ptr<Expr> arg;
-    bool cps;
 };
 
 struct BlockExpr : public Expr {
@@ -300,21 +368,23 @@ struct FieldExpr : public Expr {
     Ptr<Id> id;
 };
 
-struct ForallExpr : public Expr {
-    ForallExpr(Comp& comp, Loc loc, Ptr<Ptrn>&& domain, Ptr<Expr>&& codomain)
+struct PiExpr : public Expr {
+    PiExpr(Comp& comp, Loc loc, FTag tag, Ptr<Ptrn>&& dom, Ptr<Expr>&& codom)
         : Expr(comp, loc)
-        , domain(std::move(domain))
-        , codomain(std::move(codomain))
+          , tag(tag)
+        , dom(std::move(dom))
+        , codom(std::move(codom))
     {}
 
-    //bool returns_bottom() const { return codomain->isa<BottomExpr>(); }
+    //bool returns_bottom() const { return codom->isa<BottomExpr>(); }
 
     Stream& stream(Stream& s) const override;
     void bind(Scopes&) const override;
     //const thorin::Def* emit(Emitter&) const override;
 
-    Ptr<Ptrn> domain;
-    Ptr<Expr> codomain;
+    FTag tag;
+    Ptr<Ptrn> dom;
+    Ptr<Expr> codom;
 };
 
 struct ForExpr : public Expr {
@@ -323,23 +393,23 @@ struct ForExpr : public Expr {
     //const thorin::Def* emit(Emitter&) const override;
 };
 
-struct LambdaExpr : public Expr {
-    LambdaExpr(Comp& comp, Loc loc, Ptr<Ptrn>&& domain, Ptr<Expr>&& codomain, Ptr<Expr>&& body)
+struct LamExpr : public Expr {
+    LamExpr(Comp& comp, Loc loc, Ptr<Ptrn>&& dom, Ptr<Expr>&& codom, Ptr<Expr>&& body)
         : Expr(comp, loc)
-        , domain(std::move(domain))
-        , codomain(std::move(codomain))
+        , dom(std::move(dom))
+        , codom(std::move(codom))
         , body(std::move(body))
     {}
 
-    //bool returns_bottom() const { return codomain->isa<BottomExpr>(); }
+    //bool returns_bottom() const { return codom->isa<BottomExpr>(); }
 
     Stream& stream(Stream& s) const override;
     void bind(Scopes&) const override;
     //const thorin::Def* emit(Emitter&) const override;
 
     mutable const Id* id = nullptr;
-    Ptr<Ptrn> domain;
-    Ptr<Expr> codomain;
+    Ptr<Ptrn> dom;
+    Ptr<Expr> codom;
     Ptr<Expr> body;
 };
 
@@ -350,9 +420,9 @@ struct MatchExpr : public Expr {
 };
 
 struct PackExpr : public Expr {
-    PackExpr(Comp& comp, Loc loc, Ptrs<Ptrn>&& domains, Ptr<Expr>&& body)
+    PackExpr(Comp& comp, Loc loc, Ptrs<Ptrn>&& doms, Ptr<Expr>&& body)
         : Expr(comp, loc)
-        , domains(std::move(domains))
+        , doms(std::move(doms))
         , body(std::move(body))
     {}
 
@@ -360,7 +430,7 @@ struct PackExpr : public Expr {
     void bind(Scopes&) const override;
     //const thorin::Def* emit(Emitter&) const override;
 
-    Ptrs<Ptrn> domains;
+    Ptrs<Ptrn> doms;
     Ptr<Expr> body;
 };
 
@@ -451,9 +521,9 @@ struct TypeExpr : public Expr {
 };
 
 struct VariadicExpr : public Expr {
-    VariadicExpr(Comp& comp, Loc loc, Ptrs<Ptrn>&& domains, Ptr<Expr>&& body)
+    VariadicExpr(Comp& comp, Loc loc, Ptrs<Ptrn>&& doms, Ptr<Expr>&& body)
         : Expr(comp, loc)
-        , domains(std::move(domains))
+        , doms(std::move(doms))
         , body(std::move(body))
     {}
 
@@ -461,7 +531,7 @@ struct VariadicExpr : public Expr {
     void bind(Scopes&) const override;
     //const thorin::Def* emit(Emitter&) const override;
 
-    Ptrs<Ptrn> domains;
+    Ptrs<Ptrn> doms;
     Ptr<Expr> body;
 };
 
@@ -489,60 +559,6 @@ struct UnknownExpr : public Expr {
 };
 
 struct WhileExpr : public Expr {
-};
-
-/*
- * Stmnt
- */
-
-struct Stmnt : public thorin::RuntimeCast<Stmnt>, public Node {
-    Stmnt(Comp& comp, Loc loc)
-        : Node(comp, loc)
-    {}
-
-    virtual void bind(Scopes&) const = 0;
-    //virtual void emit(Emitter&) const = 0;
-};
-
-struct ExprStmnt : public Stmnt {
-    ExprStmnt(Comp& comp, Loc loc, Ptr<Expr>&& expr)
-        : Stmnt(comp, loc)
-        , expr(std::move(expr))
-    {}
-
-    Stream& stream(Stream& s) const override;
-    void bind(Scopes&) const override;
-    //void emit(Emitter&) const override;
-
-    Ptr<Expr> expr;
-};
-
-struct ItemStmnt : public Stmnt {
-    ItemStmnt(Comp& comp, Loc loc, Ptr<Item>&& item)
-        : Stmnt(comp, loc)
-        , item(std::move(item))
-    {}
-
-    Stream& stream(Stream& s) const override;
-    void bind(Scopes&) const override;
-    //void emit(Emitter&) const override;
-
-    Ptr<Item> item;
-};
-
-struct LetStmnt : public Stmnt {
-    LetStmnt(Comp& comp, Loc loc, Ptr<Ptrn>&& ptrn, Ptr<Expr>&& init)
-        : Stmnt(comp, loc)
-        , ptrn(std::move(ptrn))
-        , init(std::move(init))
-    {}
-
-    Stream& stream(Stream& s) const override;
-    void bind(Scopes&) const override;
-    //void emit(Emitter&) const override;
-
-    Ptr<Ptrn> ptrn;
-    Ptr<Expr> init;
 };
 
 //------------------------------------------------------------------------------

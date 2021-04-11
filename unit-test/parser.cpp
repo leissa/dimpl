@@ -4,17 +4,18 @@
 #include <string>
 
 #include "thorin/util/stream.h"
-#include "impala/parser.h"
+#include "dimpl/parser.h"
 
-using namespace impala;
+using namespace dimpl;
 
 TEST(Parser, Pack) {
-    Compiler compiler;
-    parse_expr(compiler, "pk(x: int; y)");
-    parse_expr(compiler, "pk(int; y)");
-    EXPECT_EQ(compiler.num_errors(), 0);
+    Comp comp;
+    parse_expr(comp, "pk(x: int; y)");
+    parse_expr(comp, "pk(int; y)");
+    EXPECT_EQ(comp.num_errors(), 0);
 }
 
+#if 0
 TEST(Parser, Prec) {
     static const auto in =
     "{"
@@ -39,84 +40,85 @@ TEST(Parser, Prec) {
     "    ()\n"
     "}\n";
 
-    Compiler compiler;
-    auto expr = parse_expr(compiler, in);
-    std::ostringstream os;
-    Printer printer(os, true);
-    expr->stream(printer);
+    Comp comp;
+    auto expr = parse_expr(comp, in);
+    thorin::StringStream s;
+    expr->stream(s);
 
-    EXPECT_EQ(compiler.num_errors(), 0);
-    EXPECT_EQ(os.str(), expected);
+    EXPECT_EQ(comp.num_errors(), 0);
+    EXPECT_EQ(s.str(), expected);
 }
+#endif
 
 TEST(Parser, Sigma) {
-    Compiler compiler;
-    parse_expr(compiler, "[]");
-    parse_expr(compiler, "[x,      y]");
-    parse_expr(compiler, "[x: int, y]");
-    parse_expr(compiler, "[x: int, y: int]");
-    parse_expr(compiler, "[x,      y: int]");
-    parse_expr(compiler, "[x,      y,]");
-    parse_expr(compiler, "[x: int, y,]");
-    parse_expr(compiler, "[x: int, y: int,]");
-    parse_expr(compiler, "[x,      y: int,]");
-    EXPECT_EQ(compiler.num_errors(), 0);
+    Comp comp;
+    parse_expr(comp, "[]");
+    parse_expr(comp, "[x,      y]");
+    parse_expr(comp, "[x: int, y]");
+    parse_expr(comp, "[x: int, y: int]");
+    parse_expr(comp, "[x,      y: int]");
+    parse_expr(comp, "[x,      y,]");
+    parse_expr(comp, "[x: int, y,]");
+    parse_expr(comp, "[x: int, y: int,]");
+    parse_expr(comp, "[x,      y: int,]");
+    EXPECT_EQ(comp.num_errors(), 0);
 }
 
 TEST(Parser, Stmnts) {
-    Compiler compiler;
-    parse_expr(compiler, "if cond { x }");
-    parse_expr(compiler, "if cond { x } else { y }");
-    parse_expr(compiler, "if cond { x } else if cond { y }");
-    parse_expr(compiler, "if cond { x } else if cond { y } else { z }");
+    Comp comp;
+    parse_expr(comp, "if cond { x }");
+    parse_expr(comp, "if cond { x } else { y }");
+    parse_expr(comp, "if cond { x } else if cond { y }");
+    parse_expr(comp, "if cond { x } else if cond { y } else { z }");
 
-    parse_expr(compiler, "{ foo; if cond { x } }");
-    parse_expr(compiler, "{ foo; if cond { x } else { y } }");
-    parse_expr(compiler, "{ foo; if cond { x } else if cond { y } }");
-    parse_expr(compiler, "{ foo; if cond { x } else if cond { y } else { z } }");
+    parse_expr(comp, "{ foo; if cond { x } }");
+    parse_expr(comp, "{ foo; if cond { x } else { y } }");
+    parse_expr(comp, "{ foo; if cond { x } else if cond { y } }");
+    parse_expr(comp, "{ foo; if cond { x } else if cond { y } else { z } }");
 
-    parse_expr(compiler, "{ if cond { x } foo }");
-    parse_expr(compiler, "{ if cond { x } else { y } foo }");
-    parse_expr(compiler, "{ if cond { x } else if cond { y } foo }");
-    parse_expr(compiler, "{ if cond { x } else if cond { y } else { z } foo }");
+    parse_expr(comp, "{ if cond { x } foo }");
+    parse_expr(comp, "{ if cond { x } else { y } foo }");
+    parse_expr(comp, "{ if cond { x } else if cond { y } foo }");
+    parse_expr(comp, "{ if cond { x } else if cond { y } else { z } foo }");
 
-    parse_expr(compiler, "{ if cond { x }; foo }");
-    parse_expr(compiler, "{ if cond { x } else { y }; foo }");
-    parse_expr(compiler, "{ if cond { x } else if cond { y }; foo }");
-    parse_expr(compiler, "{ if cond { x } else if cond { y } else { z }; foo }");
+    parse_expr(comp, "{ if cond { x }; foo }");
+    parse_expr(comp, "{ if cond { x } else { y }; foo }");
+    parse_expr(comp, "{ if cond { x } else if cond { y }; foo }");
+    parse_expr(comp, "{ if cond { x } else if cond { y } else { z }; foo }");
 
-    EXPECT_EQ(compiler.num_errors(), 0);
+    EXPECT_EQ(comp.num_errors(), 0);
 }
 
 TEST(Parser, Tuple) {
-    Compiler compiler;
+    Comp comp;
 
-    parse_expr(compiler, "()");
-    parse_expr(compiler, "(x,   y)");
-    parse_expr(compiler, "(x=a, y)");
-    parse_expr(compiler, "(x=a, y=b)");
-    parse_expr(compiler, "(x,   y=b)");
+    parse_expr(comp, "()");
+    parse_expr(comp, "(x,   y)");
+    parse_expr(comp, "(x=a, y)");
+    parse_expr(comp, "(x=a, y=b)");
+    parse_expr(comp, "(x,   y=b)");
 
-    parse_expr(compiler, "(x,   y,)");
-    parse_expr(compiler, "(x=a, y,)");
-    parse_expr(compiler, "(x=a, y=b,)");
-    parse_expr(compiler, "(x,   y=b,)");
+    parse_expr(comp, "(x,   y,)");
+    parse_expr(comp, "(x=a, y,)");
+    parse_expr(comp, "(x=a, y=b,)");
+    parse_expr(comp, "(x,   y=b,)");
 
-    parse_expr(compiler, "(x,   y): T");
-    parse_expr(compiler, "(x=a, y): T");
-    parse_expr(compiler, "(x=a, y=b): T");
-    parse_expr(compiler, "(x,   y=b): T");
+    parse_expr(comp, "(x,   y): T");
+    parse_expr(comp, "(x=a, y): T");
+    parse_expr(comp, "(x=a, y=b): T");
+    parse_expr(comp, "(x,   y=b): T");
 
-    parse_expr(compiler, "(x,   y,): T");
-    parse_expr(compiler, "(x=a, y,): T");
-    parse_expr(compiler, "(x=a, y=b,): T");
-    parse_expr(compiler, "(x,   y=b,): T");
-    EXPECT_EQ(compiler.num_errors(), 0);
+    parse_expr(comp, "(x,   y,): T");
+    parse_expr(comp, "(x=a, y,): T");
+    parse_expr(comp, "(x=a, y=b,): T");
+    parse_expr(comp, "(x,   y=b,): T");
+
+    EXPECT_EQ(comp.num_errors(), 0);
 }
 
 TEST(Parser, Variadic) {
-    Compiler compiler;
-    parse_expr(compiler, "ar[x: int; y]");
-    parse_expr(compiler, "ar[int; y]");
-    EXPECT_EQ(compiler.num_errors(), 0);
+    Comp comp;
+    parse_expr(comp, "ar[x: int; y]");
+    parse_expr(comp, "ar[int; y]");
+    EXPECT_EQ(comp.num_errors(), 0);
 }

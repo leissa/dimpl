@@ -13,6 +13,7 @@ enable_testing()
 add_executable(unit-test
     test.cpp
     lexer.cpp
+    parser.cpp
 )
 
 target_link_libraries(unit-test gtest_main libdimpl)

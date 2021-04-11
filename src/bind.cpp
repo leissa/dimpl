@@ -9,7 +9,7 @@ namespace dimpl {
 const Id* Decl::id() const {
     switch (tag_) {
         case Tag::IdPtrn: return id_ptrn_->id.get();
-        case Tag::Item:   return item_->id.get();
+        case Tag::Nom:    return nom_->id.get();
         default: THORIN_UNREACHABLE;
     }
 }
@@ -17,7 +17,7 @@ const Id* Decl::id() const {
 const thorin::Def* Decl::def() const {
     switch (tag_) {
         case Tag::IdPtrn: return id_ptrn_->def();
-        case Tag::Item:   return item_->def();
+        case Tag::Nom:    return nom_->def();
         default: THORIN_UNREACHABLE;
     }
 }
@@ -51,11 +51,11 @@ void Scopes::bind_stmnts(const Ptrs<Stmnt>& stmnts) {
 #if 0
     auto i = stmnts.begin(), e = stmnts.end();
     while (i != e) {
-        if ((*i)->isa<ItemStmnt>()) {
-            for (auto j = i; j != e && (*j)->isa<ItemStmnt>(); ++j)
-                (*j)->as<ItemStmnt>()->item->bind_rec(*this);
-            for (; i != e && (*i)->isa<ItemStmnt>(); ++i)
-                (*i)->as<ItemStmnt>()->item->bind(*this);
+        if ((*i)->isa<NomStmnt>()) {
+            for (auto j = i; j != e && (*j)->isa<NomStmnt>(); ++j)
+                (*j)->as<NomStmnt>()->nom->bind_rec(*this);
+            for (; i != e && (*i)->isa<NomStmnt>(); ++i)
+                (*i)->as<NomStmnt>()->nom->bind(*this);
         } else {
             (*i)->bind(*this);
             ++i;
@@ -72,13 +72,13 @@ void Prg::bind(Scopes& s) const {
     s.pop();
 }
 
-void Item::bind(Scopes& s) const {
+void Nom::bind(Scopes& s) const {
     s.push();
     expr->bind(s);
     s.pop();
 }
 
-void Item::bind_rec(Scopes& s) const {
+void Nom::bind_rec(Scopes& s) const {
     s.insert({this});
 }
 
@@ -121,9 +121,9 @@ void FieldExpr::bind(Scopes& s) const {
     lhs->bind(s);
 }
 
-void ForallExpr::bind(Scopes& s) const {
-    domain->bind(s);
-    codomain->bind(s);
+void PiExpr::bind(Scopes& s) const {
+    dom->bind(s);
+    codom->bind(s);
 }
 
 void IdExpr::bind(Scopes& s) const {
@@ -147,9 +147,9 @@ void InfixExpr::bind(Scopes& s) const {
     rhs->bind(s);
 }
 
-void LambdaExpr::bind(Scopes& s) const {
-    domain->bind(s);
-    codomain->bind(s);
+void LamExpr::bind(Scopes& s) const {
+    dom->bind(s);
+    codom->bind(s);
     body->bind(s);
 }
 
@@ -174,8 +174,8 @@ void TupleExpr::bind(Scopes& s) const {
 void UnknownExpr::bind(Scopes&) const {}
 
 void PackExpr::bind(Scopes& s) const {
-    for (auto&& domain : domains)
-        domain->bind(s);
+    for (auto&& dom : doms)
+        dom->bind(s);
     body->bind(s);
 }
 
@@ -189,8 +189,8 @@ void TypeExpr::bind(Scopes& s) const {
 }
 
 void VariadicExpr::bind(Scopes& s) const {
-    for (auto&& domain : domains)
-        domain->bind(s);
+    for (auto&& dom : doms)
+        dom->bind(s);
     body->bind(s);
 }
 
@@ -210,8 +210,8 @@ void LetStmnt::bind(Scopes& s) const {
     ptrn->bind(s);
 }
 
-void ItemStmnt::bind(Scopes& s) const {
-    item->bind(s);
+void NomStmnt::bind(Scopes& s) const {
+    nom->bind(s);
 }
 
 //------------------------------------------------------------------------------

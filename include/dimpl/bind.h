@@ -7,14 +7,14 @@ namespace dimpl {
 
 struct Id;
 struct IdPtrn;
-struct Item;
+struct Nom;
 struct Node;
 struct Stmnt;
 
 //------------------------------------------------------------------------------
 
 struct Decl {
-    enum class Tag { None, IdPtrn, Item };
+    enum class Tag { None, IdPtrn, Nom };
 
     Decl()
         : tag_(Tag::None)
@@ -23,15 +23,15 @@ struct Decl {
         : tag_(Tag::IdPtrn)
         , id_ptrn_(id_ptrn)
     {}
-    Decl(const Item* item)
-        : tag_(Tag::Item)
-        , item_(item)
+    Decl(const Nom* nom)
+        : tag_(Tag::Nom)
+        , nom_(nom)
     {}
 
     Tag tag() const { return tag_; }
     bool is_valid() const { return tag_ != Tag::None; }
     const IdPtrn* id_ptrn() const { assert(tag_ == Tag::IdPtrn); return id_ptrn_; }
-    const Item* item() const { assert(tag_ == Tag::Item); return item_; }
+    const Nom* nom() const { assert(tag_ == Tag::Nom); return nom_; }
     const Id* id() const;
     Sym sym() const;
     const thorin::Def* def() const;
@@ -40,7 +40,7 @@ private:
     Tag tag_;
     union {
         const IdPtrn* id_ptrn_;
-        const Item* item_;
+        const Nom* nom_;
     };
 };
 

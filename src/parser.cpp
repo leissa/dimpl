@@ -55,10 +55,10 @@ Ptr<Prg> Parser::parse_prg() {
         switch (ahead().tag()) {
             case Tok::Tag::K_cn:
             case Tok::Tag::K_fn:
-            case Tok::Tag::K_nom: stmnts.emplace_back(parse_item_stmnt()); continue;
+            case Tok::Tag::K_nom: stmnts.emplace_back(parse_nom_stmnt()); continue;
             case Tok::Tag::K_let: stmnts.emplace_back(parse_let_stmnt());  continue;
             default:
-                err("item or let statement", "program");
+                err("nominal or let statement", "program");
                 lex();
         }
     }
@@ -136,8 +136,9 @@ Ptr<Expr> Parser::parse_expr(const char* context, Tok::Prec p) {
     while (true) {
         switch (ahead().tag()) {
             case Tok::Tag::P_dot:       lhs = parse_field_expr  (tracker, std::move(lhs)); continue;
-            case Tok::Tag::D_paren_l:   lhs = parse_cps_app_expr(tracker, std::move(lhs)); continue;
-            case Tok::Tag::D_bracket_l: lhs = parse_ds_app_expr (tracker, std::move(lhs)); continue;
+            //case Tok::Tag::D_cps_paran_l:
+            case Tok::Tag::D_paren_l:
+            case Tok::Tag::D_bracket_l: lhs = parse_app_expr    (tracker, std::move(lhs)); continue;
             case Tok::Tag::O_inc:
             case Tok::Tag::O_dec:       lhs = parse_postfix_expr(tracker, std::move(lhs)); continue;
             default: break;
@@ -156,20 +157,13 @@ Ptr<Expr> Parser::parse_prefix_expr() {
     auto tracker = track();
     auto tag = lex().tag();
     auto rhs = parse_expr("right-hand side of a unary expression", Tok::Prec::Unary);
-
     return make_ptr<PrefixExpr>(tracker, (PrefixExpr::Tag) tag, std::move(rhs));
 }
 
 Ptr<Expr> Parser::parse_infix_expr(Tracker tracker, Ptr<Expr>&& lhs) {
-    auto tok = lex();
-    auto rhs = parse_expr("right-hand side of a binary expression", Tok::tag2prec(tok.tag()));
-    //if (auto name = Tok::tag2name(tok.tag()); name[0] != '\0') {
-        //auto callee = make_ptr<IdExpr>(make_ptr<Id>(comp().tok(tok.loc(), name)));
-        // TODO
-        //auto args = make_tuple(std::move(lhs), std::move(rhs));
-        //return make_ptr<AppExpr>(tracker, std::move(callee), std::move(args), true);
-    //}
-    return make_ptr<InfixExpr>(tracker, std::move(lhs), (InfixExpr::Tag) tok.tag(), std::move(rhs));
+    auto tag = lex().tag();
+    auto rhs = parse_expr("right-hand side of a binary expression", Tok::tag2prec(tag));
+    return make_ptr<InfixExpr>(tracker, std::move(lhs), (InfixExpr::Tag) tag, std::move(rhs));
 }
 
 Ptr<Expr> Parser::parse_postfix_expr(Tracker tracker, Ptr<Expr>&& lhs) {
@@ -177,14 +171,18 @@ Ptr<Expr> Parser::parse_postfix_expr(Tracker tracker, Ptr<Expr>&& lhs) {
     return make_ptr<PostfixExpr>(tracker, std::move(lhs), (PostfixExpr::Tag) tag);
 }
 
-Ptr<AppExpr> Parser::parse_cps_app_expr(Tracker tracker, Ptr<Expr>&& callee) {
-    auto arg = parse_tuple_expr();
-    return make_ptr<AppExpr>(tracker, std::move(callee), std::move(arg), true);
-}
+Ptr<AppExpr> Parser::parse_app_expr(Tracker tracker, Ptr<Expr>&& callee) {
+    auto delim_l = lex().tag();
 
-Ptr<AppExpr> Parser::parse_ds_app_expr(Tracker tracker, Ptr<Expr>&& callee) {
-    auto arg = parse_tuple_expr(Tok::Tag::D_bracket_l, Tok::Tag::D_bracket_r);
-    return make_ptr<AppExpr>(tracker, std::move(callee), std::move(arg), false);
+    FTag tag;
+    switch (delim_l) {
+        case Tok::Tag::D_bracket_l: tag = FTag::DS; break;
+      //case Tok::Tag::D_paren_l:   tag = FTag::Cn; break;
+        case Tok::Tag::D_paren_l:   tag = FTag::Fn; break;
+        default: THORIN_UNREACHABLE;
+    }
+
+    return make_ptr<AppExpr>(tracker, tag, std::move(callee), parse_tuple_expr(delim_l));
 }
 
 Ptr<FieldExpr> Parser::parse_field_expr(Tracker tracker, Ptr<Expr>&& lhs) {
@@ -207,15 +205,16 @@ Ptr<Expr> Parser::parse_primary_expr(const char* context) {
         case Tok::Tag::O_not:
         case Tok::Tag::O_sub:
         case Tok::Tag::O_tilde:     return parse_prefix_expr();
+        case Tok::Tag::B_forall:
+        case Tok::Tag::K_Cn:
+        case Tok::Tag::K_Fn:        return parse_pi_expr();
         case Tok::Tag::D_brace_l:   return parse_block_expr(nullptr);
         case Tok::Tag::D_bracket_l: return parse_sigma_expr();
         case Tok::Tag::D_paren_l:   return parse_tuple_expr();
         case Tok::Tag::K_ar:        return parse_variadic_expr();
         case Tok::Tag::K_cn:        return parse_cn_expr();
-        case Tok::Tag::K_Cn:        return parse_cn_type_expr();
         case Tok::Tag::K_false:     return nullptr; // TODO
         case Tok::Tag::K_fn:        return parse_fn_expr();
-        case Tok::Tag::K_Fn:        return parse_fn_type_expr();
         case Tok::Tag::K_for:       return parse_for_expr();
         case Tok::Tag::K_if:        return parse_if_expr();
         case Tok::Tag::K_match:     return parse_match_expr();
@@ -227,8 +226,7 @@ Ptr<Expr> Parser::parse_primary_expr(const char* context) {
         case Tok::Tag::L_s:         return nullptr; // TODO
         case Tok::Tag::L_u:         return nullptr; // TODO
         case Tok::Tag::M_id:        return parse_id_expr();
-        case Tok::Tag::B_forall:    return parse_forall_expr();
-        case Tok::Tag::B_lambda:    return parse_lambda_expr();
+        case Tok::Tag::B_lam:       return parse_lam_expr();
         default:
             err("expression", context ? context : "primary expression");
             return make_error_expr();
@@ -249,15 +247,15 @@ Ptr<BlockExpr> Parser::parse_block_expr(const char* context) {
         switch (ahead().tag()) {
             case Tok::Tag::P_semicolon: lex(); continue; // ignore semicolon
             case Tok::Tag::K_let:       stmnts.emplace_back(parse_let_stmnt()); continue;
-            case Tok::Tag::K_nom:       stmnts.emplace_back(parse_item_stmnt()); continue;
+            case Tok::Tag::K_nom:       stmnts.emplace_back(parse_nom_stmnt()); continue;
             case Tok::Tag::D_brace_r:   {
                 final_expr = make_unit_tuple();
                 return make_ptr<BlockExpr>(tracker, std::move(stmnts), std::move(final_expr));
             }
             default: {
-                // cn and fn items
+                // cn and fn noms
                 if (((ahead(0).isa(Tok::Tag::K_cn) || ahead(0).isa(Tok::Tag::K_fn)) && ahead(1).isa(Tok::Tag::M_id))) {
-                    stmnts.emplace_back(parse_item_stmnt());
+                    stmnts.emplace_back(parse_nom_stmnt());
                     continue;
                 }
 
@@ -329,9 +327,9 @@ Ptr<SigmaExpr> Parser::parse_sigma_expr() {
     return make_ptr<SigmaExpr>(tracker, std::move(elems));
 }
 
-Ptr<TupleExpr> Parser::parse_tuple_expr(Tok::Tag delim_l, Tok::Tag delim_r) {
+Ptr<TupleExpr> Parser::parse_tuple_expr(Tok::Tag delim_l) {
     auto tracker = track();
-
+    auto delim_r = delim_l == Tok::Tag::D_bracket_l ? Tok::Tag::D_bracket_r : Tok::Tag::D_paren_r;
     auto elems = parse_list("tuple", delim_l, delim_r, [&]{
         auto tracker = track();
         Ptr<Id> id;
@@ -379,19 +377,19 @@ Ptr<WhileExpr> Parser::parse_while_expr() {
 }
 
 /*
- * LambdaExprs
+ * LamExprs
  */
 
-Ptr<LambdaExpr> Parser::parse_cn_expr(bool item) {
+Ptr<LamExpr> Parser::parse_cn_expr(bool nom) {
     auto tracker = track();
     eat(Tok::Tag::K_cn);
 
     auto id = ahead().isa(Tok::Tag::M_id) ? parse_id() : nullptr;
-    if (!item && id) {
-        comp().err(id->loc, "it is not allowed to name a continuation expression; use a continuation item instead");
+    if (!nom && id) {
+        comp().err(id->loc, "it is not allowed to name a continuation expression; use a continuation nomianl instead");
         id = nullptr;
     }
-    if (item && !id)
+    if (nom && !id)
         id = make_id("_");
 
     auto ds_domain = ahead().isa(Tok::Tag::D_bracket_l)
@@ -401,26 +399,26 @@ Ptr<LambdaExpr> Parser::parse_cn_expr(bool item) {
     auto domain = parse_tuple_ptrn("domain of a continuation");
     auto body = parse_expr("body of a continuation");
 
-    auto f = make_ptr<LambdaExpr>(tracker, std::move(domain), make_bottom_expr(), std::move(body));
+    auto f = make_ptr<LamExpr>(tracker, std::move(domain), make_bottom_expr(), std::move(body));
 
     if (ds_domain)
-        f = make_ptr<LambdaExpr>(tracker, std::move(ds_domain), make_unknown_expr(), std::move(f));
+        f = make_ptr<LamExpr>(tracker, std::move(ds_domain), make_unknown_expr(), std::move(f));
 
     if (id)
-        f->id = id.release(); // the Item of the callee will be the owner
+        f->id = id.release(); // the Nom of the callee will be the owner
     return f;
 }
 
-Ptr<LambdaExpr> Parser::parse_fn_expr(bool item) {
+Ptr<LamExpr> Parser::parse_fn_expr(bool nom) {
     auto tracker = track();
     eat(Tok::Tag::K_fn);
 
     auto id = ahead().isa(Tok::Tag::M_id) ? parse_id() : nullptr;
-    if (!item && id) {
-        comp().err(id->loc, "it is not allowed to name a function expression; use a function item instead");
+    if (!nom && id) {
+        comp().err(id->loc, "it is not allowed to name a function expression; use a function nomianl instead");
         id = nullptr;
     }
-    if (item && !id)
+    if (nom && !id)
         id = make_id("_");
 
     auto ds_domain = ahead().isa(Tok::Tag::D_bracket_l)
@@ -438,39 +436,28 @@ Ptr<LambdaExpr> Parser::parse_fn_expr(bool item) {
     domain = make_ptr<TuplePtrn>(loc, make_ptrs<Ptrn>(std::move(first), std::move(ret_ptrn)), make_unknown_expr(), false);
 
     auto body = parse_expr("body of a function");
-    auto f = make_ptr<LambdaExpr>(tracker, std::move(domain), make_bottom_expr(), std::move(body));
+    auto f = make_ptr<LamExpr>(tracker, std::move(domain), make_bottom_expr(), std::move(body));
 
     if (ds_domain)
-        f = make_ptr<LambdaExpr>(tracker, std::move(ds_domain), make_unknown_expr(), std::move(f));
+        f = make_ptr<LamExpr>(tracker, std::move(ds_domain), make_unknown_expr(), std::move(f));
 
     if (id)
-        f->id = id.release(); // the Item of the callee will be the owner
+        f->id = id.release(); // the Nom of the callee will be the owner
     return f;
 }
 
-Ptr<LambdaExpr> Parser::parse_lambda_expr() {
+Ptr<LamExpr> Parser::parse_lam_expr() {
     auto tracker = track();
-    eat(Tok::Tag::B_lambda);
+    eat(Tok::Tag::B_lam);
     auto domain = parse_ptrn("domain of an abstraction");
     auto codomain = accept(Tok::Tag::O_arrow) ? parse_expr("codomain of an abstraction", Tok::Prec::Arrow) : make_unknown_expr();
     auto body = parse_expr("body of an abstraction");
 
-    return make_ptr<LambdaExpr>(tracker, std::move(domain), std::move(codomain), std::move(body));
+    return make_ptr<LamExpr>(tracker, std::move(domain), std::move(codomain), std::move(body));
 }
 
-/*
- * ForallExpr
- */
-
-Ptr<ForallExpr> Parser::parse_cn_type_expr() {
-    auto tracker = track();
-    eat(Tok::Tag::K_Cn);
-    auto domain = parse_ptrn_t();
-
-    return make_ptr<ForallExpr>(tracker, std::move(domain), make_bottom_expr());
-}
-
-Ptr<ForallExpr> Parser::parse_fn_type_expr() {
+#if 0
+Ptr<PiExpr> Parser::parse_fn_type_expr() {
     auto tracker = track();
     eat(Tok::Tag::K_Fn);
     auto domain = parse_ptrn_t();
@@ -483,17 +470,29 @@ Ptr<ForallExpr> Parser::parse_fn_type_expr() {
     auto loc = first->loc;// + ret_ptrn->loc;
     domain = make_id_ptrn("_", make_ptr<SigmaExpr>(loc, make_ptrs<Ptrn>(std::move(first), std::move(ret_ptrn))));
 
-    return make_ptr<ForallExpr>(tracker, std::move(domain), make_bottom_expr());
+    return make_ptr<PiExpr>(tracker, std::move(domain), make_bottom_expr());
 }
+#endif
 
-Ptr<ForallExpr> Parser::parse_forall_expr() {
+Ptr<PiExpr> Parser::parse_pi_expr() {
     auto tracker = track();
-    eat(Tok::Tag::B_forall);
-    auto domain = parse_ptrn_t();
-    expect(Tok::Tag::O_arrow, "for-all type");
-    auto codomain = parse_expr("codomain of a for-all type", Tok::Prec::Arrow);
+    FTag tag;
+    switch (lex().tag()) {
+        case Tok::Tag::B_forall: tag = FTag::DS; break;
+        case Tok::Tag::K_Cn:     tag = FTag::Cn; break;
+        case Tok::Tag::K_Fn:     tag = FTag::Fn; break;
+        default: THORIN_UNREACHABLE;
+    }
 
-    return make_ptr<ForallExpr>(tracker, std::move(domain), std::move(codomain));
+    auto dom = parse_ptrn_t();
+
+    Ptr<Expr> codom;
+    if (tag != FTag::Cn) {
+        expect(Tok::Tag::O_arrow, "for-all type");
+        codom = parse_expr("codomain", Tok::Prec::Arrow);
+    }
+
+    return make_ptr<PiExpr>(tracker, tag, std::move(dom), std::move(codom));
 }
 
 /*
@@ -511,17 +510,17 @@ Ptr<LetStmnt> Parser::parse_let_stmnt() {
     return make_ptr<LetStmnt>(tracker, std::move(ptrn), std::move(init));
 }
 
-Ptr<ItemStmnt> Parser::parse_item_stmnt() {
+Ptr<NomStmnt> Parser::parse_nom_stmnt() {
     auto tracker = track();
-    Ptr<Item> item;
+    Ptr<Nom> nom;
     Ptr<Id> id;
 
-    Ptr<LambdaExpr> f = ahead().isa(Tok::Tag::K_cn) ? parse_cn_expr(true)
-                      : ahead().isa(Tok::Tag::K_fn) ? parse_fn_expr(true) : nullptr;
+    Ptr<LamExpr> f = ahead().isa(Tok::Tag::K_cn) ? parse_cn_expr(true)
+                   : ahead().isa(Tok::Tag::K_fn) ? parse_fn_expr(true) : nullptr;
 
     if (f) {
         id.reset(f->id);
-        item = make_ptr<Item>(tracker, std::move(id), std::move(f));
+        nom = make_ptr<Nom>(tracker, std::move(id), std::move(f));
     } else {
         switch (ahead().tag()) {
             // TODO other cases
@@ -529,7 +528,7 @@ Ptr<ItemStmnt> Parser::parse_item_stmnt() {
         }
     }
 
-    return make_ptr<ItemStmnt>(tracker, std::move(item));
+    return make_ptr<NomStmnt>(tracker, std::move(nom));
 }
 
 //------------------------------------------------------------------------------

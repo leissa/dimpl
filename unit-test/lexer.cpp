@@ -26,7 +26,7 @@ TEST(Lexer, Toks) {
     EXPECT_TRUE(lexer.lex().isa(Tok::Tag::P_colon));
     EXPECT_TRUE(lexer.lex().isa(Tok::Tag::P_comma));
     EXPECT_TRUE(lexer.lex().isa(Tok::Tag::P_dot));
-    EXPECT_TRUE(lexer.lex().isa(Tok::Tag::B_lambda));
+    EXPECT_TRUE(lexer.lex().isa(Tok::Tag::B_lam));
     EXPECT_TRUE(lexer.lex().isa(Tok::Tag::B_forall));
     EXPECT_TRUE(lexer.lex().isa(Tok::Tag::M_eof));
 }

@@ -62,8 +62,7 @@ public:
     Ptr<Expr>         parse_prefix_expr();
     Ptr<Expr>         parse_infix_expr(Tracker, Ptr<Expr>&&);
     Ptr<Expr>         parse_postfix_expr(Tracker, Ptr<Expr>&&);
-    Ptr<AppExpr>      parse_cps_app_expr(Tracker, Ptr<Expr>&&);
-    Ptr<AppExpr>      parse_ds_app_expr(Tracker, Ptr<Expr>&&);
+    Ptr<AppExpr>      parse_app_expr(Tracker, Ptr<Expr>&&);
     Ptr<FieldExpr>    parse_field_expr(Tracker, Ptr<Expr>&&);
     //@}
 
@@ -77,31 +76,25 @@ public:
     Ptr<IfExpr>       parse_if_expr();
     Ptr<MatchExpr>    parse_match_expr();
     Ptr<PackExpr>     parse_pack_expr();
+    Ptr<PiExpr>       parse_pi_expr();
     Ptr<SigmaExpr>    parse_sigma_expr();
-    Ptr<TupleExpr>    parse_tuple_expr(Tok::Tag delim_l = Tok::Tag::D_paren_l, Tok::Tag delim_r = Tok::Tag::D_paren_r);
+    Ptr<TupleExpr>    parse_tuple_expr(Tok::Tag delim_l = Tok::Tag::D_paren_l);
     Ptr<TypeExpr>     parse_type_expr();
     Ptr<VariadicExpr> parse_variadic_expr();
     Ptr<WhileExpr>    parse_while_expr();
     //@}
 
-    /// @name ForallExpr%s
+    /// @name LamExpr%s
     //@{
-    Ptr<ForallExpr>   parse_cn_type_expr();
-    Ptr<ForallExpr>   parse_fn_type_expr();
-    Ptr<ForallExpr>   parse_forall_expr();
-    //@}
-
-    /// @name LambdaExpr%s
-    //@{
-    Ptr<LambdaExpr>   parse_cn_expr(bool item = false);
-    Ptr<LambdaExpr>   parse_fn_expr(bool item = false);
-    Ptr<LambdaExpr>   parse_lambda_expr();
+    Ptr<LamExpr>   parse_cn_expr(bool nom = false);
+    Ptr<LamExpr>   parse_fn_expr(bool nom = false);
+    Ptr<LamExpr>   parse_lam_expr();
     //@}
 
     /// @name Stmnt%s
     //@{
-    Ptr<LetStmnt>   parse_let_stmnt();
-    Ptr<ItemStmnt>  parse_item_stmnt();
+    Ptr<LetStmnt>  parse_let_stmnt();
+    Ptr<NomStmnt>  parse_nom_stmnt();
     //@}
 
 private:
@@ -136,9 +129,9 @@ private:
         auto loc = id->loc;
         return make_ptr<IdPtrn>(loc, std::move(id), make_unknown_expr(), false);
     }
-    Ptr<ForallExpr>   make_cn_type(Ptr<Ptrn>&& domain) {
+    Ptr<PiExpr>   make_cn_type(Ptr<Ptrn>&& domain) {
         auto loc = domain->loc;
-        return make_ptr<ForallExpr>(loc, std::move(domain), make_bottom_expr());
+        return make_ptr<PiExpr>(loc, FTag::Cn, std::move(domain), make_bottom_expr());
     }
     //@}
 

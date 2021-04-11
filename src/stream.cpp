@@ -12,7 +12,7 @@ namespace dimpl {
 
 #if 0
 static bool is_cn_type(const Expr* expr) {
-    if (auto forall = expr->isa<ForallExpr>(); forall && forall->returns_bottom())
+    if (auto pi = expr->isa<PiExpr>(); pi && pi->returns_bottom())
         return true;
     return false;
 }
@@ -38,25 +38,25 @@ Stream& Id::stream(Stream& s) const {
     return s.fmt("{}", sym);
 }
 
-Stream& Item::stream(Stream& s) const {
+Stream& Nom::stream(Stream& s) const {
     return s;
 #if 0
     if (comp.fancy) {
         auto e = this->expr.get();
-        const LambdaExpr* lambda = nullptr;
-        if (auto l = e->isa<LambdaExpr>(); l && !l->returns_bottom()) {
+        const LamExpr* lambda = nullptr;
+        if (auto l = e->isa<LamExpr>(); l && !l->returns_bottom()) {
             lambda = l;
             e = l->body.get();
         }
 
-        if (auto f = e->isa<LambdaExpr>()) {
+        if (auto f = e->isa<LamExpr>()) {
             if (lambda) {
-                if (auto xy = dissect_ptrn(f->domain.get()))
-                    return s.fmt("fn {}[{, }]{} {}", id, lambda->domain, xy->first, f->body);
+                if (auto xy = dissect_ptrn(f->dom.get()))
+                    return s.fmt("fn {}[{, }]{} {}", id, lambda->dom, xy->first, f->body);
                 else
-                    return s.fmt("fn {}[{, }]{} {}", id, lambda->domain, f->domain, f->body);
+                    return s.fmt("fn {}[{, }]{} {}", id, lambda->dom, f->dom, f->body);
             } else {
-                return s.fmt("fn {}{} {}", id, f->domain, f->body);
+                return s.fmt("fn {}{} {}", id, f->dom, f->body);
             }
         }
     }
@@ -133,14 +133,14 @@ Stream& FieldExpr::stream(Stream& s) const {
     return s.fmt("{}.{}", lhs, id);
 }
 
-Stream& ForallExpr::stream(Stream& s) const {
+Stream& PiExpr::stream(Stream& s) const {
 #if 0
     if (comp.fancy && is_cn_type(this)) {
-        if (auto sigma = domain->type->isa<SigmaExpr>(); sigma && sigma->elems.size() == 2 && is_cn_type(sigma->elems.back().get()))
-            return s.fmt("Fn {} -> {}", sigma->elems.front(), sigma->elems.back()->type->as<ForallExpr>()->domain);
-        return s.fmt("Cn {}", domain);
+        if (auto sigma = dom->type->isa<SigmaExpr>(); sigma && sigma->elems.size() == 2 && is_cn_type(sigma->elems.back().get()))
+            return s.fmt("Fn {} -> {}", sigma->elems.front(), sigma->elems.back()->type->as<PiExpr>()->dom);
+        return s.fmt("Cn {}", dom);
     }
-    return s.fmt("\\/ {} -> {}", domain, codomain);
+    return s.fmt("\\/ {} -> {}", dom, codom);
 #endif
     return s;
 }
@@ -157,18 +157,18 @@ Stream& InfixExpr::stream(Stream& s) const {
     return s.fmt("({} {} {})", lhs, Tok::tag2str((Tok::Tag) tag), rhs);
 }
 
-Stream& LambdaExpr::stream(Stream& s) const {
+Stream& LamExpr::stream(Stream& s) const {
 #if 0
     if (comp.fancy) {
         if (returns_bottom()) {
-            if (auto xy = dissect_ptrn(domain.get()))
+            if (auto xy = dissect_ptrn(dom.get()))
                 return s.fmt("fn {} {}", xy->first, body);
-            return s.fmt("cn {} {}", domain, body);
+            return s.fmt("cn {} {}", dom, body);
         }
-        if (codomain->isa<UnknownExpr>())
-            return s.fmt("\\ {} {}", domain, body);
+        if (codom->isa<UnknownExpr>())
+            return s.fmt("\\ {} {}", dom, body);
     }
-    return s.fmt("\\ {} -> {} {}", domain, codomain, body);
+    return s.fmt("\\ {} -> {} {}", dom, codom, body);
 #endif
     return s;
 }
@@ -201,7 +201,7 @@ Stream& UnknownExpr::stream(Stream& s) const {
 }
 
 Stream& PackExpr::stream(Stream& s) const {
-    return s.fmt("pk({, }; {})", domains, body);
+    return s.fmt("pk({, }; {})", doms, body);
 }
 
 Stream& SigmaExpr::stream(Stream& s) const {
@@ -211,7 +211,7 @@ Stream& SigmaExpr::stream(Stream& s) const {
 Stream& TypeExpr::stream(Stream& s) const { return s.fmt("type"); }
 
 Stream& VariadicExpr::stream(Stream& s) const {
-    return s.fmt("ar[{, }; {}]", domains, body);
+    return s.fmt("ar[{, }; {}]", doms, body);
 }
 
 Stream& ErrorExpr::stream(Stream& s) const {
@@ -233,8 +233,8 @@ Stream& LetStmnt::stream(Stream& s) const {
         return s.fmt("let {};", ptrn);
 }
 
-Stream& ItemStmnt::stream(Stream& s) const {
-    return s.fmt("{}", item).endl();
+Stream& NomStmnt::stream(Stream& s) const {
+    return s.fmt("{}", nom).endl();
 }
 
 }

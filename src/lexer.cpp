@@ -148,7 +148,7 @@ Tok Lexer::lex() {
         // backslash
         if (accept('\\')) {
             if (accept('/')) return comp().tok(loc_, Tok::Tag::B_forall);
-            return comp().tok(loc_, Tok::Tag::B_lambda);
+            return comp().tok(loc_, Tok::Tag::B_lam);
         }
 
         // operators

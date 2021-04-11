@@ -98,7 +98,7 @@ constexpr auto Num_Keys  = size_t(0) DIMPL_KEY(CODE);
     f(P_dot,          ".")  \
     f(P_semicolon,    ";")  \
     /* backslash */ \
-    f(B_lambda,       "\\") \
+    f(B_lam,          "\\") \
     f(B_forall,       "\\/")
 
 #define DIMPL_OPS(f) \
