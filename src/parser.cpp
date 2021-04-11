@@ -4,6 +4,13 @@
 
 namespace dimpl {
 
+#define DIMPL_NOM Tok::Tag::K_nom:    \
+             case Tok::Tag::B_lam:    \
+             case Tok::Tag::K_cn:     \
+             case Tok::Tag::K_fn:     \
+             case Tok::Tag::K_struct: \
+             case Tok::Tag::K_trait
+
 static FTag tag2ftag(Tok::Tag tag) {
     switch (tag) {
         case Tok::Tag::B_forall:
@@ -68,10 +75,8 @@ Ptr<Prg> Parser::parse_prg() {
     Ptrs<Stmnt> stmnts;
     while (!ahead().isa(Tok::Tag::M_eof)) {
         switch (ahead().tag()) {
-            case Tok::Tag::K_cn:
-            case Tok::Tag::K_fn:
-            case Tok::Tag::K_nom: stmnts.emplace_back(parse_nom_stmnt()); continue;
-            case Tok::Tag::K_let: stmnts.emplace_back(parse_let_stmnt());  continue;
+            case DIMPL_NOM:       stmnts.emplace_back(parse_nom_stmnt()); continue;
+            case Tok::Tag::K_let: stmnts.emplace_back(parse_let_stmnt()); continue;
             default:
                 err("nominal or let statement", "program");
                 lex();
@@ -100,15 +105,39 @@ Ptr<Expr> Parser::parse_type_ascription(const char* ascription_context) {
  * nom
  */
 
+Ptr<Nom> Parser::parse_nom() {
+    auto track = tracker();
+
+    switch (lex().tag()) {
+        case Tok::Tag::K_nom:    parse_nom_nom();
+        case Tok::Tag::B_lam:
+        case Tok::Tag::K_cn:
+        case Tok::Tag::K_fn:     parse_abs_nom();
+        case Tok::Tag::K_struct:
+        case Tok::Tag::K_trait:  parse_sig_nom();
+        default: THORIN_UNREACHABLE;
+    }
+}
+
+Ptr<NomNom> Parser::parse_nom_nom() {
+    return nullptr;
+}
+
 Ptr<AbsNom> Parser::parse_abs_nom() {
     auto track = tracker();
     auto tag = tag2ftag(lex().tag());
     auto id = ahead().isa(Tok::Tag::M_id) ? parse_id() : make_id("_");
     auto meta = ahead().isa(Tok::Tag::D_bracket_l) ? parse_tuple_ptrn(nullptr, nullptr, Tok::Tag::D_bracket_l) : nullptr;
-    auto dom = parse_tuple_ptrn("domain of a function");
+    auto dom = tag == FTag::DS ? nullptr : parse_tuple_ptrn("domain of a function");
     auto codom = accept(Tok::Tag::O_arrow) ? parse_expr("codomain of an function", Tok::Prec::Arrow) : make_unknown_expr();
+    bool assign = accept(Tok::Tag::O_assign);
     auto body = parse_expr("body of a function");
+    if (assign) expect(Tok::Tag::P_semicolon, "end of function whose body was introduced with '='");
     return make_ptr<AbsNom>(track, tag, std::move(id), std::move(meta), std::move(dom), std::move(codom), std::move(body));
+}
+
+Ptr<SigNom> Parser::parse_sig_nom() {
+    return nullptr;
 }
 
 /*
@@ -270,28 +299,22 @@ Ptr<BlockExpr> Parser::parse_block_expr(const char* context) {
     Ptr<Expr> final_expr;
     while (true) {
         switch (ahead().tag()) {
-            case Tok::Tag::P_semicolon: lex(); continue; // ignore semicolon
+            case Tok::Tag::P_semicolon: lex();                                  continue; // ignore semicolon
+            case DIMPL_NOM:             stmnts.emplace_back(parse_nom_stmnt()); continue;
             case Tok::Tag::K_let:       stmnts.emplace_back(parse_let_stmnt()); continue;
-            case Tok::Tag::K_nom:       stmnts.emplace_back(parse_nom_stmnt()); continue;
             case Tok::Tag::D_brace_r:   {
                 final_expr = make_unit_tuple();
-                return make_ptr<BlockExpr>(track, std::move(stmnts), std::move(final_expr));
+                return make_ptr<BlockExpr>(track, std::move(stmnts), make_unit_tuple());
             }
             default: {
-                // cn and fn noms
-                if (((ahead(0).isa(Tok::Tag::K_cn) || ahead(0).isa(Tok::Tag::K_fn)) && ahead(1).isa(Tok::Tag::M_id))) {
-                    stmnts.emplace_back(parse_nom_stmnt());
-                    continue;
-                }
-
                 auto expr_track = tracker();
                 Ptr<Expr> expr;
                 bool stmnt_like = true;
                 switch (ahead().tag()) {
-                    case Tok::Tag::K_if:      expr = parse_if_expr(); break;
-                    case Tok::Tag::K_match:   expr = parse_match_expr(); break;
-                    case Tok::Tag::K_for:     expr = parse_for_expr(); break;
-                    case Tok::Tag::K_while:   expr = parse_while_expr(); break;
+                    case Tok::Tag::K_if:      expr = parse_if_expr();           break;
+                    case Tok::Tag::K_match:   expr = parse_match_expr();        break;
+                    case Tok::Tag::K_for:     expr = parse_for_expr();          break;
+                    case Tok::Tag::K_while:   expr = parse_while_expr();        break;
                     case Tok::Tag::D_brace_l: expr = parse_block_expr(nullptr); break;
                     default:                  expr = parse_expr("block expression"); stmnt_like = false;
                 }
@@ -370,7 +393,7 @@ Ptr<TupleExpr> Parser::parse_tuple_expr(Tok::Tag delim_l) {
     auto track = tracker();
     auto delim_r = delim_l == Tok::Tag::D_bracket_l ? Tok::Tag::D_bracket_r : Tok::Tag::D_paren_r;
     auto elems = parse_list("tuple", delim_l, delim_r, [&]{
-            auto track = tracker();
+        auto track = tracker();
         Ptr<Id> id;
         if (ahead(0).isa(Tok::Tag::M_id) && ahead(1).isa(Tok::Tag::O_assign)) {
             id = parse_id();
@@ -431,27 +454,8 @@ Ptr<LetStmnt> Parser::parse_let_stmnt() {
 }
 
 Ptr<NomStmnt> Parser::parse_nom_stmnt() {
-#if 0
     auto track = tracker();
-    Ptr<Nom> nom;
-    Ptr<Id> id;
-
-    Ptr<LamExpr> f = ahead().isa(Tok::Tag::K_cn) ? parse_cn_expr(true)
-                   : ahead().isa(Tok::Tag::K_fn) ? parse_fn_expr(true) : nullptr;
-
-    if (f) {
-        id.reset(f->id);
-        nom = make_ptr<Nom>(track, std::move(id), std::move(f));
-    } else {
-        switch (ahead().tag()) {
-            // TODO other cases
-            default: THORIN_UNREACHABLE;
-        }
-    }
-
-    return make_ptr<NomStmnt>(track, std::move(nom));
-#endif
-    return nullptr;
+    return make_ptr<NomStmnt>(track, parse_nom());
 }
 
 //------------------------------------------------------------------------------

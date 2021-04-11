@@ -40,7 +40,10 @@ public:
 
     /// @name nom
     //@{
+    Ptr<   Nom> parse_nom();
+    Ptr<NomNom> parse_nom_nom();
     Ptr<AbsNom> parse_abs_nom();
+    Ptr<SigNom> parse_sig_nom();
     //@}
 
     /// @name Ptrn%s
@@ -92,8 +95,8 @@ public:
 
     /// @name Stmnt%s
     //@{
-    Ptr<LetStmnt>  parse_let_stmnt();
-    Ptr<NomStmnt>  parse_nom_stmnt();
+    Ptr<LetStmnt>   parse_let_stmnt();
+    Ptr<NomStmnt>   parse_nom_stmnt();
     //@}
 
 private:

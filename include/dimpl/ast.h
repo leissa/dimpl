@@ -133,6 +133,21 @@ struct Prg : public Node {
  * Nom
  */
 
+struct NomNom : public Nom {
+    NomNom(Comp& comp, Loc loc, Ptr<Id> id, Ptr<Expr> type, Ptr<Expr> body)
+        : Nom(comp, loc, std::move(id))
+        , type(std::move(type))
+        , body(std::move(body))
+    {}
+
+    Stream& stream(Stream& s) const override;
+    void bind(Scopes&) const override;
+    //const thorin::Def* emit(Emitter&) const override;
+
+    Ptr<Expr> type;
+    Ptr<Expr> body;
+};
+
 struct AbsNom : public Nom {
     AbsNom(Comp& comp, Loc loc, FTag tag, Ptr<Id>&& id, Ptr<Ptrn>&& meta, Ptr<Ptrn>&& dom, Ptr<Expr>&& codom, Ptr<Expr>&& body)
         : Nom(comp, loc, std::move(id))
@@ -152,6 +167,18 @@ struct AbsNom : public Nom {
     Ptr<Ptrn> dom;
     Ptr<Expr> codom;
     Ptr<Expr> body;
+};
+
+struct SigNom : public Nom {
+    SigNom(Comp& comp, Loc loc, Ptr<Id>&& id)
+        : Nom(comp, loc, std::move(id))
+    {}
+
+    Stream& stream(Stream& s) const override;
+    void bind(Scopes&) const override;
+    //const thorin::Def* emit(Emitter&) const override;
+
+    // TODO
 };
 
 /*
