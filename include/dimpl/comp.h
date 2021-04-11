@@ -76,29 +76,30 @@ constexpr auto Num_Keys  = size_t(0) DIMPL_KEY(CODE);
     f(L_u,        "<integer literal>") \
     f(L_f,        "<floating-point literal>")
 
-#define DIMPL_TOK(f) \
-    /* misc */ \
-    f(M_eof,          "<eof>") \
-    f(M_id,           "<identifier>") \
-    /* delimiters */ \
-    f(D_angle_l,      "‹")  \
-    f(D_angle_r,      "›")  \
-    f(D_brace_l,      "{")  \
-    f(D_brace_r,      "}")  \
-    f(D_bracket_l,    "[")  \
-    f(D_bracket_r,    "]")  \
-    f(D_paren_l,      "(")  \
-    f(D_paren_r,      ")")  \
-    f(D_quote_l,      "«")  \
-    f(D_quote_r,      "»")  \
-    /* punctation */ \
-    f(P_colon,        ":")  \
-    f(P_colon_colon,  "::") \
-    f(P_comma,        ",")  \
-    f(P_dot,          ".")  \
-    f(P_semicolon,    ";")  \
-    /* backslash */ \
-    f(B_lam,          "\\") \
+#define DIMPL_TOK(f)                    \
+    /* misc */                          \
+    f(M_eof,          "<eof>")          \
+    f(M_id,           "<identifier>")   \
+    /* delimiters */                    \
+    f(D_angle_l,      "‹")              \
+    f(D_angle_r,      "›")              \
+    f(D_brace_l,      "{")              \
+    f(D_brace_r,      "}")              \
+    f(D_bracket_l,    "[")              \
+    f(D_bracket_r,    "]")              \
+    f(D_paren_l,      "(")              \
+    f(D_paren_r,      ")")              \
+    f(D_quote_l,      "«")              \
+    f(D_quote_r,      "»")              \
+    f(D_bang_paren_l, "!(")             \
+    /* punctation */                    \
+    f(P_colon,        ":")              \
+    f(P_colon_colon,  "::")             \
+    f(P_comma,        ",")              \
+    f(P_dot,          ".")              \
+    f(P_semicolon,    ";")              \
+    /* backslash */                     \
+    f(B_lam,          "\\")             \
     f(B_forall,       "\\/")
 
 #define DIMPL_OPS(f) \

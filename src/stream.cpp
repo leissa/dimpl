@@ -38,30 +38,12 @@ Stream& Id::stream(Stream& s) const {
     return s.fmt("{}", sym);
 }
 
-Stream& Nom::stream(Stream& s) const {
-    return s;
-#if 0
-    if (comp.fancy) {
-        auto e = this->expr.get();
-        const LamExpr* lambda = nullptr;
-        if (auto l = e->isa<LamExpr>(); l && !l->returns_bottom()) {
-            lambda = l;
-            e = l->body.get();
-        }
+/*
+ * nom
+ */
 
-        if (auto f = e->isa<LamExpr>()) {
-            if (lambda) {
-                if (auto xy = dissect_ptrn(f->dom.get()))
-                    return s.fmt("fn {}[{, }]{} {}", id, lambda->dom, xy->first, f->body);
-                else
-                    return s.fmt("fn {}[{, }]{} {}", id, lambda->dom, f->dom, f->body);
-            } else {
-                return s.fmt("fn {}{} {}", id, f->dom, f->body);
-            }
-        }
-    }
-    return s.fmt("letrec {} = {};", id, expr);
-#endif
+Stream& AbsNom::stream(Stream& s) const {
+    return s; // TODO
 }
 
 /*
@@ -157,21 +139,7 @@ Stream& InfixExpr::stream(Stream& s) const {
     return s.fmt("({} {} {})", lhs, Tok::tag2str((Tok::Tag) tag), rhs);
 }
 
-Stream& LamExpr::stream(Stream& s) const {
-#if 0
-    if (comp.fancy) {
-        if (returns_bottom()) {
-            if (auto xy = dissect_ptrn(dom.get()))
-                return s.fmt("fn {} {}", xy->first, body);
-            return s.fmt("cn {} {}", dom, body);
-        }
-        if (codom->isa<UnknownExpr>())
-            return s.fmt("\\ {} {}", dom, body);
-    }
-    return s.fmt("\\ {} -> {} {}", dom, codom, body);
-#endif
-    return s;
-}
+Stream& AbsExpr::stream(Stream& s) const { return abs->stream(s); }
 
 Stream& PrefixExpr::stream(Stream& s) const {
     return s.fmt("({}{})", Tok::tag2str((Tok::Tag) tag), rhs);

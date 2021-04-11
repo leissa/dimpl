@@ -32,10 +32,15 @@ public:
     Comp& comp() { return lexer_.comp(); }
 
     /// @name misc
-    //@{ misc
+    //@{
     Ptr<Prg>  parse_prg();
     Ptr<Id>   parse_id(const char* context = nullptr);
     Ptr<Expr> parse_type_ascription(const char* ascription_context = nullptr);
+    //@}
+
+    /// @name nom
+    //@{
+    Ptr<AbsNom> parse_abs_nom();
     //@}
 
     /// @name Ptrn%s
@@ -69,6 +74,7 @@ public:
     /// @name primary Expr%s
     //@{
     Ptr<Expr>         parse_primary_expr(const char* context);
+    Ptr<AbsExpr>      parse_abs_expr();
     Ptr<BlockExpr>    parse_block_expr(const char* context);
     Ptr<BottomExpr>   parse_bottom_expr();
     Ptr<ForExpr>      parse_for_expr();
@@ -82,13 +88,6 @@ public:
     Ptr<TypeExpr>     parse_type_expr();
     Ptr<VariadicExpr> parse_variadic_expr();
     Ptr<WhileExpr>    parse_while_expr();
-    //@}
-
-    /// @name LamExpr%s
-    //@{
-    Ptr<LamExpr>   parse_cn_expr(bool nom = false);
-    Ptr<LamExpr>   parse_fn_expr(bool nom = false);
-    Ptr<LamExpr>   parse_lam_expr();
     //@}
 
     /// @name Stmnt%s
@@ -160,8 +159,8 @@ private:
         return result;
     }
 
-    Tracker track() { return Tracker(*this, ahead().loc().begin); }
-    Tracker track(const Pos& pos) { return Tracker(*this, pos); }
+    Tracker tracker() { return Tracker(*this, ahead().loc().begin); }
+    Tracker tracker(const Pos& pos) { return Tracker(*this, pos); }
 
     /// Consume next Tok in input stream, fill look-ahead buffer, return consumed Tok.
     Tok lex();

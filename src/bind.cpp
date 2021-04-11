@@ -72,14 +72,11 @@ void Prg::bind(Scopes& s) const {
     s.pop();
 }
 
-void Nom::bind(Scopes& s) const {
-    s.push();
-    expr->bind(s);
-    s.pop();
-}
+/*
+ * Ptrn
+ */
 
-void Nom::bind_rec(Scopes& s) const {
-    s.insert({this});
+void AbsNom::bind(Scopes&) const {
 }
 
 /*
@@ -147,10 +144,8 @@ void InfixExpr::bind(Scopes& s) const {
     rhs->bind(s);
 }
 
-void LamExpr::bind(Scopes& s) const {
-    dom->bind(s);
-    codom->bind(s);
-    body->bind(s);
+void AbsExpr::bind(Scopes& s) const {
+    abs->bind(s);
 }
 
 void PrefixExpr::bind(Scopes& s) const {

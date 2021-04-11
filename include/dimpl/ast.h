@@ -100,24 +100,20 @@ struct Ptrn : public thorin::RuntimeCast<Ptrn>, public Node {
 };
 
 struct Nom : public Node {
-    Nom(Comp& comp, Loc loc, Ptr<Id>&& id, Ptr<Expr> expr)
+    Nom(Comp& comp, Loc loc, Ptr<Id>&& id)
         : Node(comp, loc)
         , id(std::move(id))
-        , expr(std::move(expr))
     {}
 
+    bool is_anonymous() const { return id->is_anonymous(); }
     const thorin::Def* def() const { return def_; }
-    Stream& stream(Stream& s) const override;
-    void bind_rec(Scopes&) const;
-    void bind(Scopes&) const;
-    //void emit_rec(Emitter&) const;
+    virtual void bind(Scopes&) const = 0;
     //void emit(Emitter&) const;
 
     Ptr<Id> id;
-    Ptr<Expr> expr;
 
 private:
-    mutable const thorin::Def* def_ = nullptr;
+    const thorin::Def* def_ = nullptr;
 };
 
 struct Prg : public Node {
@@ -133,13 +129,30 @@ struct Prg : public Node {
     Ptrs<Stmnt> stmnts;
 };
 
-struct CnFn {
-};
-
 /*
  * Nom
  */
 
+struct AbsNom : public Nom {
+    AbsNom(Comp& comp, Loc loc, FTag tag, Ptr<Id>&& id, Ptr<Ptrn>&& meta, Ptr<Ptrn>&& dom, Ptr<Expr>&& codom, Ptr<Expr>&& body)
+        : Nom(comp, loc, std::move(id))
+        , tag(tag)
+        , meta(std::move(meta))
+        , dom(std::move(dom))
+        , codom(std::move(codom))
+        , body(std::move(body))
+    {}
+
+    Stream& stream(Stream& s) const override;
+    void bind(Scopes&) const override;
+    //const thorin::Def* emit(Emitter&) const override;
+
+    FTag tag;
+    Ptr<Ptrn> meta;
+    Ptr<Ptrn> dom;
+    Ptr<Expr> codom;
+    Ptr<Expr> body;
+};
 
 /*
  * Ptrn
@@ -163,6 +176,7 @@ struct IdPtrn : public Ptrn {
 
     Sym sym() const { return id->sym; }
     const thorin::Def* def() const { return def_; }
+    bool is_anonymous() const { return id->is_anonymous(); }
 
     Stream& stream(Stream& s) const override;
     void bind(Scopes&) const override;
@@ -245,6 +259,19 @@ struct NomStmnt : public Stmnt {
  * Expr
  */
 
+struct AbsExpr : public Expr {
+    AbsExpr(Comp& comp, Ptr<AbsNom>&& abs)
+        : Expr(comp, abs->loc)
+        , abs(std::move(abs))
+    {}
+
+    Stream& stream(Stream& s) const override;
+    void bind(Scopes&) const override;
+    //const thorin::Def* emit(Emitter&) const override;
+
+    Ptr<AbsNom> abs;
+};
+
 struct AppExpr : public Expr {
     AppExpr(Comp& comp, Loc loc, FTag tag, Ptr<Expr>&& callee, Ptr<Expr>&& arg)
         : Expr(comp, loc)
@@ -292,6 +319,27 @@ struct ErrorExpr : public Expr {
         : Expr(comp, loc)
     {}
 
+    Stream& stream(Stream& s) const override;
+    void bind(Scopes&) const override;
+    //const thorin::Def* emit(Emitter&) const override;
+};
+
+struct FieldExpr : public Expr {
+    FieldExpr(Comp& comp, Loc loc, Ptr<Expr>&& lhs, Ptr<Id>&& id)
+        : Expr(comp, loc)
+        , lhs(std::move(lhs))
+        , id(std::move(id))
+    {}
+
+    Stream& stream(Stream& s) const override;
+    void bind(Scopes&) const override;
+    //const thorin::Def* emit(Emitter&) const override;
+
+    Ptr<Expr> lhs;
+    Ptr<Id> id;
+};
+
+struct ForExpr : public Expr {
     Stream& stream(Stream& s) const override;
     void bind(Scopes&) const override;
     //const thorin::Def* emit(Emitter&) const override;
@@ -353,66 +401,6 @@ struct InfixExpr : public Expr {
     Ptr<Expr> rhs;
 };
 
-struct FieldExpr : public Expr {
-    FieldExpr(Comp& comp, Loc loc, Ptr<Expr>&& lhs, Ptr<Id>&& id)
-        : Expr(comp, loc)
-        , lhs(std::move(lhs))
-        , id(std::move(id))
-    {}
-
-    Stream& stream(Stream& s) const override;
-    void bind(Scopes&) const override;
-    //const thorin::Def* emit(Emitter&) const override;
-
-    Ptr<Expr> lhs;
-    Ptr<Id> id;
-};
-
-struct PiExpr : public Expr {
-    PiExpr(Comp& comp, Loc loc, FTag tag, Ptr<Ptrn>&& dom, Ptr<Expr>&& codom)
-        : Expr(comp, loc)
-          , tag(tag)
-        , dom(std::move(dom))
-        , codom(std::move(codom))
-    {}
-
-    //bool returns_bottom() const { return codom->isa<BottomExpr>(); }
-
-    Stream& stream(Stream& s) const override;
-    void bind(Scopes&) const override;
-    //const thorin::Def* emit(Emitter&) const override;
-
-    FTag tag;
-    Ptr<Ptrn> dom;
-    Ptr<Expr> codom;
-};
-
-struct ForExpr : public Expr {
-    Stream& stream(Stream& s) const override;
-    void bind(Scopes&) const override;
-    //const thorin::Def* emit(Emitter&) const override;
-};
-
-struct LamExpr : public Expr {
-    LamExpr(Comp& comp, Loc loc, Ptr<Ptrn>&& dom, Ptr<Expr>&& codom, Ptr<Expr>&& body)
-        : Expr(comp, loc)
-        , dom(std::move(dom))
-        , codom(std::move(codom))
-        , body(std::move(body))
-    {}
-
-    //bool returns_bottom() const { return codom->isa<BottomExpr>(); }
-
-    Stream& stream(Stream& s) const override;
-    void bind(Scopes&) const override;
-    //const thorin::Def* emit(Emitter&) const override;
-
-    mutable const Id* id = nullptr;
-    Ptr<Ptrn> dom;
-    Ptr<Expr> codom;
-    Ptr<Expr> body;
-};
-
 struct MatchExpr : public Expr {
     Stream& stream(Stream& s) const override;
     void bind(Scopes&) const override;
@@ -432,6 +420,23 @@ struct PackExpr : public Expr {
 
     Ptrs<Ptrn> doms;
     Ptr<Expr> body;
+};
+
+struct PiExpr : public Expr {
+    PiExpr(Comp& comp, Loc loc, FTag tag, Ptr<Ptrn>&& dom, Ptr<Expr>&& codom)
+        : Expr(comp, loc)
+          , tag(tag)
+        , dom(std::move(dom))
+        , codom(std::move(codom))
+    {}
+
+    Stream& stream(Stream& s) const override;
+    void bind(Scopes&) const override;
+    //const thorin::Def* emit(Emitter&) const override;
+
+    FTag tag;
+    Ptr<Ptrn> dom;
+    Ptr<Expr> codom;
 };
 
 struct PrefixExpr : public Expr {
