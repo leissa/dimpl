@@ -60,7 +60,7 @@ public:
     /// Otherwise, it's optional.
     Ptr<Ptrn>       parse_ptrn_t(const char* ascription_context = nullptr);
     Ptr<IdPtrn>     parse_id_ptrn(const char* ascription_context = nullptr);
-    Ptr<TuplePtrn>  parse_tuple_ptrn(const char* context, const char* ascription_context = nullptr,
+    Ptr<TupPtrn>  parse_tup_ptrn(const char* context, const char* ascription_context = nullptr,
                                      Tok::Tag delim_l = Tok::Tag::D_paren_l);
     //@}
 
@@ -78,17 +78,17 @@ public:
     //@{
     Ptr<Expr>       parse_primary_expr(const char* context);
     Ptr<AbsExpr>    parse_abs_expr();
+    Ptr<ArExpr>     parse_ar_expr();
     Ptr<BlockExpr>  parse_block_expr(const char* context);
     Ptr<BottomExpr> parse_bottom_expr();
     Ptr<ForExpr>    parse_for_expr();
     Ptr<IdExpr>     parse_id_expr();
     Ptr<IfExpr>     parse_if_expr();
     Ptr<MatchExpr>  parse_match_expr();
-    Ptr<PkExpr>     parse_pk_expr();
     Ptr<PiExpr>     parse_pi_expr();
+    Ptr<PkExpr>     parse_pk_expr();
     Ptr<SigmaExpr>  parse_sigma_expr();
-    Ptr<TupleExpr>  parse_tuple_expr(Tok::Tag delim_l = Tok::Tag::D_paren_l);
-    Ptr<ArExpr>     parse_ar_expr();
+    Ptr<TupExpr>    parse_tup_expr(Tok::Tag delim_l = Tok::Tag::D_paren_l);
     Ptr<WhileExpr>  parse_while_expr();
     //@}
 
@@ -102,23 +102,23 @@ private:
     /// @name make AST nodes
     //@{
     Ptr<BottomExpr>   make_bottom_expr()      { return make_ptr<BottomExpr> (prev_); }
-    Ptr<BlockExpr>    make_empty_block_expr() { return make_ptr<BlockExpr>  (prev_, Ptrs<Stmnt>{}, make_unit_tuple()); }
+    Ptr<BlockExpr>    make_empty_block_expr() { return make_ptr<BlockExpr>  (prev_, Ptrs<Stmnt>{}, make_unit_tup()); }
     Ptr<ErrorExpr>    make_error_expr()       { return make_ptr<ErrorExpr>  (prev_); }
-    Ptr<TupleExpr>    make_unit_tuple()       { return make_ptr<TupleExpr>  (prev_, Ptrs<TupleExpr::Elem>{}, make_unknown_expr()); }
+    Ptr<TupExpr>    make_unit_tup()       { return make_ptr<TupExpr>  (prev_, Ptrs<TupExpr::Elem>{}, make_unknown_expr()); }
     Ptr<UnknownExpr>  make_unknown_expr()     { return make_ptr<UnknownExpr>(prev_); }
 
     template<class T, class... Args>
     Ptr<T> make_ptr(Args&&... args) { return std::make_unique<const T>(comp(), std::forward<Args&&>(args)...); }
 
-    Ptr<TupleExpr::Elem> make_tuple_elem(Ptr<Expr>&& expr) {
+    Ptr<TupExpr::Elem> make_tup_elem(Ptr<Expr>&& expr) {
         auto loc = expr->loc;
-        return make_ptr<TupleExpr::Elem>(loc, make_ptr<Id>(comp().tok(loc)), std::move(expr));
+        return make_ptr<TupExpr::Elem>(loc, make_ptr<Id>(comp().tok(loc)), std::move(expr));
     }
 #if 0
-    Ptr<TupleExpr>    make_tuple(Ptr<Expr>&& lhs, Ptr<Expr>&& rhs) {
+    Ptr<TupExpr>    make_tup(Ptr<Expr>&& lhs, Ptr<Expr>&& rhs) {
         auto loc = lhs->loc + rhs->loc;
-        auto args = make_ptrs<TupleExpr::Elem>(make_tuple_elem(std::move(lhs)), make_tuple_elem(std::move(rhs)));
-        return make_ptr<TupleExpr>(loc, std::move(args), make_unknown_expr());
+        auto args = make_ptrs<TupExpr::Elem>(make_tup_elem(std::move(lhs)), make_tup_elem(std::move(rhs)));
+        return make_ptr<TupExpr>(loc, std::move(args), make_unknown_expr());
     }
 #endif
     Ptr<Id>     make_id(const char* s)  { return make_ptr<Id>(prev_, comp().sym(s)); }

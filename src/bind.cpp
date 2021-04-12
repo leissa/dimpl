@@ -98,7 +98,7 @@ void IdPtrn::bind(Scopes& s) const {
     type->bind(s);
 }
 
-void TuplePtrn::bind(Scopes& s) const {
+void TupPtrn::bind(Scopes& s) const {
     for (auto&& elem : elems)
         elem->bind(s);
     type->bind(s);
@@ -157,9 +157,9 @@ void InfixExpr::bind(Scopes& s) const {
     rhs->bind(s);
 }
 
-void TupleExpr::Elem::bind(Scopes& s) const { expr->bind(s); }
+void TupExpr::Elem::bind(Scopes& s) const { expr->bind(s); }
 
-void TupleExpr::bind(Scopes& s) const {
+void TupExpr::bind(Scopes& s) const {
     for (auto&& elem : elems)
         elem->bind(s);
     type->bind(s);

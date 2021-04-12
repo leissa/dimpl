@@ -215,8 +215,8 @@ private:
     mutable const thorin::Def* def_ = nullptr;
 };
 
-struct TuplePtrn : public Ptrn {
-    TuplePtrn(Comp& comp, Loc loc, Ptrs<Ptrn>&& elems, Ptr<Expr>&& type, bool type_mandatory)
+struct TupPtrn : public Ptrn {
+    TupPtrn(Comp& comp, Loc loc, Ptrs<Ptrn>&& elems, Ptr<Expr>&& type, bool type_mandatory)
         : Ptrn(comp, loc, std::move(type), type_mandatory)
         , elems(std::move(elems))
     {}
@@ -299,8 +299,38 @@ struct AbsExpr : public Expr {
     Ptr<AbsNom> abs;
 };
 
+struct TupExpr : public Expr {
+    struct Elem : public Node {
+        Elem(Comp& comp, Loc loc, Ptr<Id>&& id, Ptr<Expr>&& expr)
+            : Node(comp, loc)
+            , id(std::move(id))
+            , expr(std::move(expr))
+        {}
+
+        Stream& stream(Stream& s) const override;
+        void bind(Scopes&) const;
+        //const thorin::Def* emit(Emitter&) const;
+
+        Ptr<Id> id;
+        Ptr<Expr> expr;
+    };
+
+    TupExpr(Comp& comp, Loc loc, Ptrs<Elem>&& elems, Ptr<Expr>&& type)
+        : Expr(comp, loc)
+        , elems(std::move(elems))
+        , type(std::move(type))
+    {}
+
+    Stream& stream(Stream& s) const override;
+    void bind(Scopes&) const override;
+    //const thorin::Def* emit(Emitter&) const override;
+
+    Ptrs<Elem> elems;
+    Ptr<Expr> type;
+};
+
 struct AppExpr : public Expr {
-    AppExpr(Comp& comp, Loc loc, FTag tag, Ptr<Expr>&& callee, Ptr<Expr>&& arg)
+    AppExpr(Comp& comp, Loc loc, FTag tag, Ptr<Expr>&& callee, Ptr<TupExpr>&& arg)
         : Expr(comp, loc)
         , tag(tag)
         , callee(std::move(callee))
@@ -313,7 +343,7 @@ struct AppExpr : public Expr {
 
     FTag tag;
     Ptr<Expr> callee;
-    Ptr<Expr> arg;
+    Ptr<TupExpr> arg;
 };
 
 struct BlockExpr : public Expr {
@@ -406,13 +436,7 @@ struct IfExpr : public Expr {
 };
 
 struct InfixExpr : public Expr {
-    enum class Tag {
-        O_tilde      = int(Tok::Tag::O_tilde),
-        O_and_and    = int(Tok::Tag::O_and_and),
-        O_or_or      = int(Tok::Tag::O_or_or),
-    };
-
-    InfixExpr(Comp& comp, Loc loc, Ptr<Expr>&& lhs, Tag tag, Ptr<Expr>&& rhs)
+    InfixExpr(Comp& comp, Loc loc, Ptr<Expr>&& lhs, Tok::Tag tag, Ptr<Expr>&& rhs)
         : Expr(comp, loc)
         , lhs(std::move(lhs))
         , tag(tag)
@@ -424,7 +448,7 @@ struct InfixExpr : public Expr {
     //const thorin::Def* emit(Emitter&) const override;
 
     Ptr<Expr> lhs;
-    Tag tag;
+    Tok::Tag tag;
     Ptr<Expr> rhs;
 };
 
@@ -452,7 +476,7 @@ struct PkExpr : public Expr {
 struct PiExpr : public Expr {
     PiExpr(Comp& comp, Loc loc, FTag tag, Ptr<Ptrn>&& dom, Ptr<Expr>&& codom)
         : Expr(comp, loc)
-          , tag(tag)
+        , tag(tag)
         , dom(std::move(dom))
         , codom(std::move(codom))
     {}
@@ -467,15 +491,7 @@ struct PiExpr : public Expr {
 };
 
 struct PrefixExpr : public Expr {
-    enum class Tag {
-        O_inc = int(Tok::Tag::O_inc),
-        O_dec = int(Tok::Tag::O_dec),
-        O_add = int(Tok::Tag::O_add),
-        O_sub = int(Tok::Tag::O_sub),
-        O_and = int(Tok::Tag::O_and),
-    };
-
-    PrefixExpr(Comp& comp, Loc loc, Tag tag, Ptr<Expr>&& rhs)
+    PrefixExpr(Comp& comp, Loc loc, Tok::Tag tag, Ptr<Expr>&& rhs)
         : Expr(comp, loc)
         , tag(tag)
         , rhs(std::move(rhs))
@@ -485,17 +501,12 @@ struct PrefixExpr : public Expr {
     void bind(Scopes&) const override;
     //const thorin::Def* emit(Emitter&) const override;
 
-    Tag tag;
+    Tok::Tag tag;
     Ptr<Expr> rhs;
 };
 
 struct PostfixExpr : public Expr {
-    enum class Tag {
-        O_inc = int(Tok::Tag::O_inc),
-        O_dec = int(Tok::Tag::O_dec),
-    };
-
-    PostfixExpr(Comp& comp, Loc loc, Ptr<Expr>&& lhs, Tag tag)
+    PostfixExpr(Comp& comp, Loc loc, Ptr<Expr>&& lhs, Tok::Tag tag)
         : Expr(comp, loc)
         , lhs(std::move(lhs))
         , tag(tag)
@@ -506,37 +517,7 @@ struct PostfixExpr : public Expr {
     //const thorin::Def* emit(Emitter&) const override;
 
     Ptr<Expr> lhs;
-    Tag tag;
-};
-
-struct TupleExpr : public Expr {
-    struct Elem : public Node {
-        Elem(Comp& comp, Loc loc, Ptr<Id>&& id, Ptr<Expr>&& expr)
-            : Node(comp, loc)
-            , id(std::move(id))
-            , expr(std::move(expr))
-        {}
-
-        Stream& stream(Stream& s) const override;
-        void bind(Scopes&) const;
-        //const thorin::Def* emit(Emitter&) const;
-
-        Ptr<Id> id;
-        Ptr<Expr> expr;
-    };
-
-    TupleExpr(Comp& comp, Loc loc, Ptrs<Elem>&& elems, Ptr<Expr>&& type)
-        : Expr(comp, loc)
-        , elems(std::move(elems))
-        , type(std::move(type))
-    {}
-
-    Stream& stream(Stream& s) const override;
-    void bind(Scopes&) const override;
-    //const thorin::Def* emit(Emitter&) const override;
-
-    Ptrs<Elem> elems;
-    Ptr<Expr> type;
+    Tok::Tag tag;
 };
 
 struct KeyExpr : public Expr {
