@@ -77,7 +77,11 @@ void Prg::bind(Scopes& s) const {
 
 void Nom::bind_rec(Scopes&) const {}
 
-void AbsNom::bind(Scopes&) const {
+void AbsNom::bind(Scopes& s) const {
+    if (meta) meta->bind(s);
+    if (dom ) dom ->bind(s);
+    body ->bind(s);
+    codom->bind(s);
 }
 
 /*
