@@ -41,102 +41,102 @@ template<class Val>
 using SymMap = thorin::HashMap<Sym, Val, SymHash>;
 using SymSet = thorin::HashSet<Sym, SymHash>;
 
-#define DIMPL_KEY(f)            \
-    f(K_Arity,     "Arity")     \
-    f(K_Cn,        "Cn")        \
-    f(K_Fn,        "Fn")        \
-    f(K_ar,        "ar")        \
-    f(K_arity,     "arity")     \
-    f(K_cn,        "cn")        \
-    f(K_else,      "else")      \
-    f(K_false,     "false")     \
-    f(K_fn,        "fn")        \
-    f(K_for,       "for")       \
-    f(K_if,        "if")        \
-    f(K_impl,      "impl")      \
-    f(K_kind,      "kind")      \
-    f(K_let,       "let")       \
-    f(K_match,     "match")     \
-    f(K_mut,       "mut")       \
-    f(K_nom,       "nom")       \
-    f(K_pk,        "pk")        \
-    f(K_struct,    "struct")    \
-    f(K_trait,     "trait")     \
-    f(K_true,      "true")      \
-    f(K_type,      "type")      \
-    f(K_var,       "var")       \
-    f(K_while,     "while")
+#define DIMPL_KEY(m)            \
+    m(K_Arity,     "Arity")     \
+    m(K_Cn,        "Cn")        \
+    m(K_Fn,        "Fn")        \
+    m(K_ar,        "ar")        \
+    m(K_arity,     "arity")     \
+    m(K_cn,        "cn")        \
+    m(K_else,      "else")      \
+    m(K_false,     "false")     \
+    m(K_fn,        "fn")        \
+    m(K_for,       "for")       \
+    m(K_if,        "if")        \
+    m(K_impl,      "impl")      \
+    m(K_kind,      "kind")      \
+    m(K_let,       "let")       \
+    m(K_match,     "match")     \
+    m(K_mut,       "mut")       \
+    m(K_nom,       "nom")       \
+    m(K_pk,        "pk")        \
+    m(K_struct,    "struct")    \
+    m(K_trait,     "trait")     \
+    m(K_true,      "true")      \
+    m(K_type,      "type")      \
+    m(K_var,       "var")       \
+    m(K_while,     "while")
 
 #define CODE(t, str) + size_t(1)
 constexpr auto Num_Keys  = size_t(0) DIMPL_KEY(CODE);
 #undef CODE
 
-#define DIMPL_LIT(f) \
-    f(L_s,        "<signed integer literal>") \
-    f(L_u,        "<integer literal>") \
-    f(L_f,        "<floating-point literal>")
+#define DIMPL_LIT(m) \
+    m(L_s,        "<signed integer literal>") \
+    m(L_u,        "<integer literal>") \
+    m(L_f,        "<floating-point literal>")
 
-#define DIMPL_TOK(f)                    \
+#define DIMPL_TOK(m)                    \
     /* misc */                          \
-    f(M_eof,          "<eof>")          \
-    f(M_id,           "<identifier>")   \
+    m(M_eof,          "<eof>")          \
+    m(M_id,           "<identifier>")   \
     /* delimiters */                    \
-    f(D_angle_l,      "‹")              \
-    f(D_angle_r,      "›")              \
-    f(D_brace_l,      "{")              \
-    f(D_brace_r,      "}")              \
-    f(D_bracket_l,    "[")              \
-    f(D_bracket_r,    "]")              \
-    f(D_paren_l,      "(")              \
-    f(D_paren_r,      ")")              \
-    f(D_quote_l,      "«")              \
-    f(D_quote_r,      "»")              \
-    f(D_bang_paren_l, "!(")             \
+    m(D_angle_l,      "‹")              \
+    m(D_angle_r,      "›")              \
+    m(D_brace_l,      "{")              \
+    m(D_brace_r,      "}")              \
+    m(D_bracket_l,    "[")              \
+    m(D_bracket_r,    "]")              \
+    m(D_paren_l,      "(")              \
+    m(D_paren_r,      ")")              \
+    m(D_quote_l,      "«")              \
+    m(D_quote_r,      "»")              \
+    m(D_bang_paren_l, "!(")             \
     /* punctation */                    \
-    f(P_colon,        ":")              \
-    f(P_colon_colon,  "::")             \
-    f(P_comma,        ",")              \
-    f(P_dot,          ".")              \
-    f(P_semicolon,    ";")              \
+    m(P_colon,        ":")              \
+    m(P_colon_colon,  "::")             \
+    m(P_comma,        ",")              \
+    m(P_dot,          ".")              \
+    m(P_semicolon,    ";")              \
     /* backslash */                     \
-    f(B_lam,          "\\")             \
-    f(B_forall,       "\\/")
+    m(B_lam,          "\\")             \
+    m(B_forall,       "\\/")
 
-#define DIMPL_OPS(f) \
-    f(O_inc,        "++",  Error,   "") \
-    f(O_dec,        "--",  Error,   "") \
-    f(O_assign,     "=",   Assign,  "") \
-    f(O_add_assign, "+=",  Assign,  "add_assign") \
-    f(O_sub_assign, "-=",  Assign,  "sub_assign") \
-    f(O_mul_assign, "*=",  Assign,  "mul_assign") \
-    f(O_div_assign, "/=",  Assign,  "div_assign") \
-    f(O_rem_assign, "%=",  Assign,  "rem_assign") \
-    f(O_shl_assign, "<<=", Assign,  "shl_assign") \
-    f(O_shr_assign, ">>=", Assign,  "shr_assign") \
-    f(O_and_assign, "&=",  Assign,  "bitand_assign") \
-    f(O_or_assign,  "|=",  Assign,  "bitor_assign") \
-    f(O_xor_assign, "^=",  Assign,  "bitxor_assign") \
-    f(O_add,        "+",   Add,     "add") \
-    f(O_sub,        "-",   Add,     "sub") \
-    f(O_mul,        "*",   Mul,     "mul") \
-    f(O_div,        "/",   Mul,     "div") \
-    f(O_rem,        "%",   Mul,     "rem") \
-    f(O_tilde,      "~",   Error,   "") \
-    f(O_shl,        "<<",  Shift,   "shl") \
-    f(O_shr,        ">>",  Shift,   "shr") \
-    f(O_and,        "&",   And,     "bitand") \
-    f(O_and_and,    "&&",  AndAnd,  "") \
-    f(O_or,         "|",   Or,      "bitor") \
-    f(O_or_or,      "||",  OrOr,    "") \
-    f(O_xor,        "^",   Xor,     "bitxor") \
-    f(O_not,        "!",   Error,   "") \
-    f(O_le,         "<=",  Rel,     "le") \
-    f(O_ge,         ">=",  Rel,     "ge") \
-    f(O_lt,         "<",   Rel,     "lt") \
-    f(O_gt,         ">",   Rel,     "gt") \
-    f(O_eq,         "==",  Rel,     "eq") \
-    f(O_ne,         "!=",  Rel,     "ne") \
-    f(O_arrow,      "->",  Arrow,   "")
+#define DIMPL_OPS(m) \
+    m(O_inc,        "++",  Error,   "") \
+    m(O_dec,        "--",  Error,   "") \
+    m(O_assign,     "=",   Assign,  "") \
+    m(O_add_assign, "+=",  Assign,  "add_assign") \
+    m(O_sub_assign, "-=",  Assign,  "sub_assign") \
+    m(O_mul_assign, "*=",  Assign,  "mul_assign") \
+    m(O_div_assign, "/=",  Assign,  "div_assign") \
+    m(O_rem_assign, "%=",  Assign,  "rem_assign") \
+    m(O_shl_assign, "<<=", Assign,  "shl_assign") \
+    m(O_shr_assign, ">>=", Assign,  "shr_assign") \
+    m(O_and_assign, "&=",  Assign,  "bitand_assign") \
+    m(O_or_assign,  "|=",  Assign,  "bitor_assign") \
+    m(O_xor_assign, "^=",  Assign,  "bitxor_assign") \
+    m(O_add,        "+",   Add,     "add") \
+    m(O_sub,        "-",   Add,     "sub") \
+    m(O_mul,        "*",   Mul,     "mul") \
+    m(O_div,        "/",   Mul,     "div") \
+    m(O_rem,        "%",   Mul,     "rem") \
+    m(O_tilde,      "~",   Error,   "") \
+    m(O_shl,        "<<",  Shift,   "shl") \
+    m(O_shr,        ">>",  Shift,   "shr") \
+    m(O_and,        "&",   And,     "bitand") \
+    m(O_and_and,    "&&",  AndAnd,  "") \
+    m(O_or,         "|",   Or,      "bitor") \
+    m(O_or_or,      "||",  OrOr,    "") \
+    m(O_xor,        "^",   Xor,     "bitxor") \
+    m(O_not,        "!",   Error,   "") \
+    m(O_le,         "<=",  Rel,     "le") \
+    m(O_ge,         ">=",  Rel,     "ge") \
+    m(O_lt,         "<",   Rel,     "lt") \
+    m(O_gt,         ">",   Rel,     "gt") \
+    m(O_eq,         "==",  Rel,     "eq") \
+    m(O_ne,         "!=",  Rel,     "ne") \
+    m(O_arrow,      "->",  Arrow,   "")
 
 class Tok : public thorin::Streamable<Sym> {
 public:

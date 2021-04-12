@@ -46,7 +46,6 @@ void Scopes::insert(Decl decl) {
 }
 
 void Scopes::bind_stmnts(const Ptrs<Stmnt>& stmnts) {
-#if 0
     for (auto i = stmnts.begin(), e = stmnts.end(); i != e;) {
         if ((*i)->isa<NomStmnt>()) {
             for (auto j = i; j != e && (*j)->isa<NomStmnt>(); ++j)
@@ -58,7 +57,6 @@ void Scopes::bind_stmnts(const Ptrs<Stmnt>& stmnts) {
             ++i;
         }
     }
-#endif
 }
 
 //------------------------------------------------------------------------------
@@ -76,6 +74,8 @@ void Prg::bind(Scopes& s) const {
 /*
  * Nom
  */
+
+void Nom::bind_rec(Scopes&) const {}
 
 void AbsNom::bind(Scopes&) const {
 }

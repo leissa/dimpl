@@ -11,7 +11,6 @@ namespace dimpl {
 struct Id;
 struct IdPtrn;
 struct Nom;
-struct Node;
 struct Stmnt;
 
 //------------------------------------------------------------------------------
@@ -43,7 +42,6 @@ public:
     {}
 
     Comp& comp() { return comp_; }
-    void bind(const Node*);
     void push() { scopes_.emplace_back(); }
     void pop()  { scopes_.pop_back(); }
     void insert(Decl);
