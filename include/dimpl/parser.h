@@ -61,7 +61,7 @@ public:
     Ptr<Ptrn>       parse_ptrn_t(const char* ascription_context = nullptr);
     Ptr<IdPtrn>     parse_id_ptrn(const char* ascription_context = nullptr);
     Ptr<TuplePtrn>  parse_tuple_ptrn(const char* context, const char* ascription_context = nullptr,
-            Tok::Tag delim_l = Tok::Tag::D_paren_l, Tok::Tag delim_r = Tok::Tag::D_paren_r);
+                                     Tok::Tag delim_l = Tok::Tag::D_paren_l);
     //@}
 
     /// @name Expr%s
@@ -76,21 +76,20 @@ public:
 
     /// @name primary Expr%s
     //@{
-    Ptr<Expr>         parse_primary_expr(const char* context);
-    Ptr<AbsExpr>      parse_abs_expr();
-    Ptr<BlockExpr>    parse_block_expr(const char* context);
-    Ptr<BottomExpr>   parse_bottom_expr();
-    Ptr<ForExpr>      parse_for_expr();
-    Ptr<IdExpr>       parse_id_expr();
-    Ptr<IfExpr>       parse_if_expr();
-    Ptr<MatchExpr>    parse_match_expr();
-    Ptr<PackExpr>     parse_pack_expr();
-    Ptr<PiExpr>       parse_pi_expr();
-    Ptr<SigmaExpr>    parse_sigma_expr();
-    Ptr<TupleExpr>    parse_tuple_expr(Tok::Tag delim_l = Tok::Tag::D_paren_l);
-    Ptr<TypeExpr>     parse_type_expr();
-    Ptr<VariadicExpr> parse_variadic_expr();
-    Ptr<WhileExpr>    parse_while_expr();
+    Ptr<Expr>       parse_primary_expr(const char* context);
+    Ptr<AbsExpr>    parse_abs_expr();
+    Ptr<BlockExpr>  parse_block_expr(const char* context);
+    Ptr<BottomExpr> parse_bottom_expr();
+    Ptr<ForExpr>    parse_for_expr();
+    Ptr<IdExpr>     parse_id_expr();
+    Ptr<IfExpr>     parse_if_expr();
+    Ptr<MatchExpr>  parse_match_expr();
+    Ptr<PkExpr>     parse_pk_expr();
+    Ptr<PiExpr>     parse_pi_expr();
+    Ptr<SigmaExpr>  parse_sigma_expr();
+    Ptr<TupleExpr>  parse_tuple_expr(Tok::Tag delim_l = Tok::Tag::D_paren_l);
+    Ptr<ArExpr>     parse_ar_expr();
+    Ptr<WhileExpr>  parse_while_expr();
     //@}
 
     /// @name Stmnt%s

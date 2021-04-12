@@ -4,7 +4,9 @@
 
 namespace dimpl {
 
-//------------------------------------------------------------------------------
+/*
+ * Decl
+ */
 
 const Id* Decl::id() const {
     switch (tag_) {
@@ -24,7 +26,9 @@ const thorin::Def* Decl::def() const {
 
 Sym Decl::sym() const { return id()->sym; }
 
-//------------------------------------------------------------------------------
+/*
+ * Scopes
+ */
 
 Decl Scopes::find(Sym sym) {
     for (auto i = scopes_.rbegin(); i != scopes_.rend(); ++i) {
@@ -47,7 +51,7 @@ void Scopes::insert(Decl decl) {
     }
 }
 
-void Scopes::bind_stmnts(const Ptrs<Stmnt>& stmnts) {
+void Scopes::bind_stmnts(const Ptrs<Stmnt>&) {
 #if 0
     auto i = stmnts.begin(), e = stmnts.end();
     while (i != e) {
@@ -64,7 +68,13 @@ void Scopes::bind_stmnts(const Ptrs<Stmnt>& stmnts) {
 #endif
 }
 
-//------------------------------------------------------------------------------
+/*
+ * bind
+ */
+
+/*
+ * misc
+ */
 
 void Prg::bind(Scopes& s) const {
     s.push();
@@ -73,7 +83,7 @@ void Prg::bind(Scopes& s) const {
 }
 
 /*
- * Ptrn
+ * Nom
  */
 
 void AbsNom::bind(Scopes&) const {
@@ -100,6 +110,15 @@ void ErrorPtrn::bind(Scopes&) const {}
  * Expr
  */
 
+void BottomExpr ::bind(Scopes&  ) const {}
+void ErrorExpr  ::bind(Scopes&  ) const {}
+void KeyExpr    ::bind(Scopes&  ) const {}
+void UnknownExpr::bind(Scopes&  ) const {}
+void AbsExpr    ::bind(Scopes& s) const { abs->bind(s); }
+void FieldExpr  ::bind(Scopes& s) const { lhs->bind(s); }
+void PostfixExpr::bind(Scopes& s) const { lhs->bind(s); }
+void PrefixExpr ::bind(Scopes& s) const { rhs->bind(s); }
+
 void AppExpr::bind(Scopes& s) const {
     callee->bind(s);
     arg->bind(s);
@@ -110,12 +129,6 @@ void BlockExpr::bind(Scopes& s) const {
     s.bind_stmnts(stmnts);
     expr->bind(s);
     s.pop();
-}
-
-void BottomExpr::bind(Scopes&) const {}
-
-void FieldExpr::bind(Scopes& s) const {
-    lhs->bind(s);
 }
 
 void PiExpr::bind(Scopes& s) const {
@@ -144,21 +157,7 @@ void InfixExpr::bind(Scopes& s) const {
     rhs->bind(s);
 }
 
-void AbsExpr::bind(Scopes& s) const {
-    abs->bind(s);
-}
-
-void PrefixExpr::bind(Scopes& s) const {
-    rhs->bind(s);
-}
-
-void PostfixExpr::bind(Scopes& s) const {
-    lhs->bind(s);
-}
-
-void TupleExpr::Elem::bind(Scopes& s) const {
-    expr->bind(s);
-}
+void TupleExpr::Elem::bind(Scopes& s) const { expr->bind(s); }
 
 void TupleExpr::bind(Scopes& s) const {
     for (auto&& elem : elems)
@@ -166,9 +165,7 @@ void TupleExpr::bind(Scopes& s) const {
     type->bind(s);
 }
 
-void UnknownExpr::bind(Scopes&) const {}
-
-void PackExpr::bind(Scopes& s) const {
+void PkExpr::bind(Scopes& s) const {
     for (auto&& dom : doms)
         dom->bind(s);
     body->bind(s);
@@ -179,17 +176,11 @@ void SigmaExpr::bind(Scopes& s) const {
         elem->bind(s);
 }
 
-void TypeExpr::bind(Scopes& s) const {
-    qualifier->bind(s);
-}
-
-void VariadicExpr::bind(Scopes& s) const {
+void ArExpr::bind(Scopes& s) const {
     for (auto&& dom : doms)
         dom->bind(s);
     body->bind(s);
 }
-
-void ErrorExpr::bind(Scopes&) const {}
 
 /*
  * Stmnt
@@ -208,7 +199,5 @@ void LetStmnt::bind(Scopes& s) const {
 void NomStmnt::bind(Scopes& s) const {
     nom->bind(s);
 }
-
-//------------------------------------------------------------------------------
 
 }

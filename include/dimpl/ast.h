@@ -54,8 +54,8 @@ struct Node : public thorin::Streamable<Node> {
     std::ostream& stream_out(std::ostream&) const;
     virtual Stream& stream(Stream& s) const = 0;
 
-    Loc loc;
     Comp& comp;
+    Loc loc;
 };
 
 struct Id : public Node {
@@ -117,7 +117,7 @@ private:
 };
 
 struct Prg : public Node {
-    Prg(Comp& copm, Loc loc, Ptrs<Stmnt>&& stmnts)
+    Prg(Comp& comp, Loc loc, Ptrs<Stmnt>&& stmnts)
         : Node(comp, loc)
         , stmnts(std::move(stmnts))
     {}
@@ -434,8 +434,8 @@ struct MatchExpr : public Expr {
     //const thorin::Def* emit(Emitter&) const override;
 };
 
-struct PackExpr : public Expr {
-    PackExpr(Comp& comp, Loc loc, Ptrs<Ptrn>&& doms, Ptr<Expr>&& body)
+struct PkExpr : public Expr {
+    PkExpr(Comp& comp, Loc loc, Ptrs<Ptrn>&& doms, Ptr<Expr>&& body)
         : Expr(comp, loc)
         , doms(std::move(doms))
         , body(std::move(body))
@@ -539,21 +539,21 @@ struct TupleExpr : public Expr {
     Ptr<Expr> type;
 };
 
-struct TypeExpr : public Expr {
-    TypeExpr(Comp& comp, Loc loc, Ptr<Expr>&& qualifier)
-        : Expr(comp, loc)
-        , qualifier(std::move(qualifier))
+struct KeyExpr : public Expr {
+    KeyExpr(Comp& comp, Tok tok)
+        : Expr(comp, tok.loc())
+        , sym(tok.sym())
     {}
 
     Stream& stream(Stream& s) const override;
     void bind(Scopes&) const override;
     //const thorin::Def* emit(Emitter&) const override;
 
-    Ptr<Expr> qualifier;
+    Sym sym;
 };
 
-struct VariadicExpr : public Expr {
-    VariadicExpr(Comp& comp, Loc loc, Ptrs<Ptrn>&& doms, Ptr<Expr>&& body)
+struct ArExpr : public Expr {
+    ArExpr(Comp& comp, Loc loc, Ptrs<Ptrn>&& doms, Ptr<Expr>&& body)
         : Expr(comp, loc)
         , doms(std::move(doms))
         , body(std::move(body))

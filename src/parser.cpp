@@ -106,15 +106,13 @@ Ptr<Expr> Parser::parse_type_ascription(const char* ascription_context) {
  */
 
 Ptr<Nom> Parser::parse_nom() {
-    auto track = tracker();
-
-    switch (lex().tag()) {
-        case Tok::Tag::K_nom:    parse_nom_nom();
+    switch (ahead().tag()) {
+        case Tok::Tag::K_nom:    return parse_nom_nom();
         case Tok::Tag::B_lam:
         case Tok::Tag::K_cn:
-        case Tok::Tag::K_fn:     parse_abs_nom();
+        case Tok::Tag::K_fn:     return parse_abs_nom();
         case Tok::Tag::K_struct:
-        case Tok::Tag::K_trait:  parse_sig_nom();
+        case Tok::Tag::K_trait:  return parse_sig_nom();
         default: THORIN_UNREACHABLE;
     }
 }
@@ -172,13 +170,15 @@ Ptr<IdPtrn> Parser::parse_id_ptrn(const char* ascription_context) {
     return make_ptr<IdPtrn>(track, std::move(id), std::move(type), bool(ascription_context));
 }
 
-Ptr<TuplePtrn> Parser::parse_tuple_ptrn(const char* context, const char* ascription_context, Tok::Tag delim_l, Tok::Tag delim_r) {
+Ptr<TuplePtrn> Parser::parse_tuple_ptrn(const char* context, const char* ascription_context, Tok::Tag delim_l) {
+#if 0
     if (!ahead().isa(delim_l)) {
         err("tuple pattern", context);
         return make_ptr<TuplePtrn>(prev_, make_ptrs<Ptrn>(), make_unknown_expr(), false);
     }
-
+#endif
     auto track = tracker();
+    auto delim_r = delim_l == Tok::Tag::D_bracket_l ? Tok::Tag::D_bracket_r : Tok::Tag::D_paren_r;
     auto ptrns = parse_list("tuple pattern", delim_l, delim_r, [&]{ return parse_ptrn("sub-pattern of a tuple pattern"); });
     auto type = parse_type_ascription(ascription_context);
     return make_ptr<TuplePtrn>(track, std::move(ptrns), std::move(type), bool(ascription_context));
@@ -247,6 +247,8 @@ Ptr<FieldExpr> Parser::parse_field_expr(Tracker track, Ptr<Expr>&& lhs) {
 
 Ptr<Expr> Parser::parse_primary_expr(const char* context) {
     switch (ahead().tag()) {
+        case Tok::Tag::K_kind:
+        case Tok::Tag::K_type:      return make_ptr<KeyExpr>(lex());
         case Tok::Tag::O_add:
         case Tok::Tag::O_and:
         case Tok::Tag::O_dec:
@@ -264,13 +266,12 @@ Ptr<Expr> Parser::parse_primary_expr(const char* context) {
         case Tok::Tag::D_brace_l:   return parse_block_expr(nullptr);
         case Tok::Tag::D_bracket_l: return parse_sigma_expr();
         case Tok::Tag::D_paren_l:   return parse_tuple_expr();
-        case Tok::Tag::K_ar:        return parse_variadic_expr();
+        case Tok::Tag::K_ar:        return parse_ar_expr();
         case Tok::Tag::K_false:     return nullptr; // TODO
         case Tok::Tag::K_for:       return parse_for_expr();
         case Tok::Tag::K_if:        return parse_if_expr();
         case Tok::Tag::K_match:     return parse_match_expr();
-        case Tok::Tag::K_pk:        return parse_pack_expr();
-        case Tok::Tag::K_type:      return parse_type_expr();
+        case Tok::Tag::K_pk:        return parse_pk_expr();
         case Tok::Tag::K_true:      return nullptr; // TODO
         case Tok::Tag::K_while:     return parse_while_expr();
         case Tok::Tag::L_f:         return nullptr; // TODO
@@ -357,7 +358,7 @@ Ptr<MatchExpr> Parser::parse_match_expr() {
     return nullptr;
 }
 
-Ptr<PackExpr> Parser::parse_pack_expr() {
+Ptr<PkExpr> Parser::parse_pk_expr() {
     auto track = tracker();
     eat(Tok::Tag::K_pk);
     expect(Tok::Tag::D_paren_l, "opening delimiter of a pack");
@@ -366,7 +367,7 @@ Ptr<PackExpr> Parser::parse_pack_expr() {
     auto body = parse_expr("body of a pack");
     expect(Tok::Tag::D_paren_r, "closing delimiter of a pack");
 
-    return make_ptr<PackExpr>(track, std::move(doms), std::move(body));
+    return make_ptr<PkExpr>(track, std::move(doms), std::move(body));
 }
 
 Ptr<PiExpr> Parser::parse_pi_expr() {
@@ -409,29 +410,16 @@ Ptr<TupleExpr> Parser::parse_tuple_expr(Tok::Tag delim_l) {
     return make_ptr<TupleExpr>(track, std::move(elems), std::move(type));
 }
 
-Ptr<TypeExpr> Parser::parse_type_expr() {
-    auto track = tracker();
-    eat(Tok::Tag::K_type);
-    Ptr<Expr> qualifier;
-
-    if (accept(Tok::Tag::D_paren_l)) {
-        qualifier = parse_expr("qualifier of a kind");
-        expect(Tok::Tag::D_paren_r, "closing delimiter of a qualified kind");
-    }
-
-    return make_ptr<TypeExpr>(track, std::move(qualifier));
-}
-
-Ptr<VariadicExpr> Parser::parse_variadic_expr() {
+Ptr<ArExpr> Parser::parse_ar_expr() {
     auto track = tracker();
     eat(Tok::Tag::K_ar);
-    expect(Tok::Tag::D_bracket_l, "opening delimiter of a variadic");
-    auto doms = parse_list(Tok::Tag::P_semicolon, [&]{ return parse_ptrn_t("type ascription of a variadic's domain"); });
-    expect(Tok::Tag::P_semicolon, "variadic");
-    auto body = parse_expr("body of a variadic");
-    expect(Tok::Tag::D_bracket_r, "closing delimiter of a variadic");
+    expect(Tok::Tag::D_bracket_l, "opening delimiter of an array");
+    auto doms = parse_list(Tok::Tag::P_semicolon, [&]{ return parse_ptrn_t("type ascription of an array's domain"); });
+    expect(Tok::Tag::P_semicolon, "array");
+    auto body = parse_expr("body of an array");
+    expect(Tok::Tag::D_bracket_r, "closing delimiter of an array");
 
-    return make_ptr<VariadicExpr>(track, std::move(doms), std::move(body));
+    return make_ptr<ArExpr>(track, std::move(doms), std::move(body));
 }
 
 Ptr<WhileExpr> Parser::parse_while_expr() {
