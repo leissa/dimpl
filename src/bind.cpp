@@ -9,19 +9,13 @@ namespace dimpl {
  */
 
 const Id* Decl::id() const {
-    switch (tag_) {
-        case Tag::IdPtrn: return id_ptrn_->id.get();
-        case Tag::Nom:    return nom_->id.get();
-        default: THORIN_UNREACHABLE;
-    }
+    if (auto id_ptrn = std::get_if<const IdPtrn*>(&node_)) return (*id_ptrn)->id.get();
+    return std::get<const Nom*>(node_)->id.get();
 }
 
 const thorin::Def* Decl::def() const {
-    switch (tag_) {
-        case Tag::IdPtrn: return id_ptrn_->def();
-        case Tag::Nom:    return nom_->def();
-        default: THORIN_UNREACHABLE;
-    }
+    if (auto id_ptrn = std::get_if<const IdPtrn*>(&node_)) return (*id_ptrn)->def();
+    return std::get<const Nom*>(node_)->def();
 }
 
 Sym Decl::sym() const { return id()->sym; }
@@ -30,7 +24,7 @@ Sym Decl::sym() const { return id()->sym; }
  * Scopes
  */
 
-Decl Scopes::find(Sym sym) {
+std::optional<Decl> Scopes::find(Sym sym) {
     for (auto i = scopes_.rbegin(); i != scopes_.rend(); ++i) {
         auto& scope = *i;
         if (auto i = scope.find(sym); i != scope.end())
@@ -51,10 +45,9 @@ void Scopes::insert(Decl decl) {
     }
 }
 
-void Scopes::bind_stmnts(const Ptrs<Stmnt>&) {
+void Scopes::bind_stmnts(const Ptrs<Stmnt>& stmnts) {
 #if 0
-    auto i = stmnts.begin(), e = stmnts.end();
-    while (i != e) {
+    for (auto i = stmnts.begin(), e = stmnts.end(); i != e;) {
         if ((*i)->isa<NomStmnt>()) {
             for (auto j = i; j != e && (*j)->isa<NomStmnt>(); ++j)
                 (*j)->as<NomStmnt>()->nom->bind_rec(*this);
@@ -68,9 +61,7 @@ void Scopes::bind_stmnts(const Ptrs<Stmnt>&) {
 #endif
 }
 
-/*
- * bind
- */
+//------------------------------------------------------------------------------
 
 /*
  * misc
@@ -138,8 +129,7 @@ void PiExpr::bind(Scopes& s) const {
 
 void IdExpr::bind(Scopes& s) const {
     if (!comp.is_anonymous(sym())) {
-        decl = s.find(sym());
-        if (!decl.is_valid())
+        if (auto decl = s.find(sym()); !decl)
             s.comp().err(loc, "use of undeclared identifier '{}'", sym());
     } else {
         s.comp().err(loc, "identifier '_' is reserved for anonymous declarations");
