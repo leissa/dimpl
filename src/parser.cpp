@@ -75,8 +75,9 @@ Ptr<Prg> Parser::parse_prg() {
     Ptrs<Stmnt> stmnts;
     while (!ahead().isa(Tok::Tag::M_eof)) {
         switch (ahead().tag()) {
-            case Tok__Tag__Nom:   stmnts.emplace_back(parse_nom_stmnt()); continue;
-            case Tok::Tag::K_let: stmnts.emplace_back(parse_let_stmnt()); continue;
+            case Tok::Tag::P_semicolon: lex(); /* ignore semicolon */           continue;
+            case Tok__Tag__Nom:         stmnts.emplace_back(parse_nom_stmnt()); continue;
+            case Tok::Tag::K_let:       stmnts.emplace_back(parse_let_stmnt()); continue;
             default:
                 err("nominal or let statement", "program");
                 lex();
@@ -298,7 +299,7 @@ Ptr<BlockExpr> Parser::parse_block_expr(const char* context) {
     Ptr<Expr> final_expr;
     while (true) {
         switch (ahead().tag()) {
-            case Tok::Tag::P_semicolon: lex();                                  continue; // ignore semicolon
+            case Tok::Tag::P_semicolon: lex(); /* ignore semicolon */           continue;
             case Tok__Tag__Nom:         stmnts.emplace_back(parse_nom_stmnt()); continue;
             case Tok::Tag::K_let:       stmnts.emplace_back(parse_let_stmnt()); continue;
             case Tok::Tag::D_brace_r:   {

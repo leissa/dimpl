@@ -57,7 +57,7 @@ static std::optional<std::pair<const Ptrn*, const Ptrn*>> dissect_ptrn(const Ptr
  * misc
  */
 
-Stream& Prg::stream(Stream& s) const { return s.fmt("{\n}\n", stmnts); }
+Stream& Prg::stream(Stream& s) const { return s.fmt("{\n}", stmnts); }
 Stream& Id ::stream(Stream& s) const { return s.fmt("{}", sym); }
 
 /*
@@ -111,7 +111,7 @@ Stream& BottomExpr ::stream(Stream& s) const { return s.fmt("⊥"); }
 Stream& ErrorExpr  ::stream(Stream& s) const { return s.fmt("<error expression>"); }
 Stream& FieldExpr  ::stream(Stream& s) const { return s.fmt("{}.{}", lhs, id); }
 Stream& IdExpr     ::stream(Stream& s) const { return s.fmt("{}", id); }
-Stream& IfExpr     ::stream(Stream& s) const { return s.fmt("if {} {}else {}", cond, then_expr, else_expr); }
+Stream& IfExpr     ::stream(Stream& s) const { return s.fmt("if {} {} else {}", cond, then_expr, else_expr); }
 Stream& InfixExpr  ::stream(Stream& s) const { return s.fmt("({} {} {})", lhs, Tok::tag2str(tag), rhs); }
 Stream& KeyExpr    ::stream(Stream& s) const { return s.fmt("{}", sym); }
 Stream& PkExpr     ::stream(Stream& s) const { return s.fmt("‹{, }; {}›", doms, body); }
@@ -126,7 +126,12 @@ Stream& AppExpr::stream(Stream& s) const {
 }
 
 Stream& BlockExpr::stream(Stream& s) const {
-    return s.fmt("{{\t\n{\n}\n{}\b\n}}", stmnts, expr);
+    s.fmt("{{\t\n");
+    s.fmt("{\n}", stmnts);
+    if (!stmnts.empty()) s.endl();
+    s.fmt("{}\b\n", expr);
+    s.fmt("}}");
+    return s;
 }
 
 Stream& PiExpr::stream(Stream& s) const {
