@@ -145,7 +145,9 @@ Tok Lexer::lex() {
             return comp().tok(loc_, Tok::Tag::P_colon);
         }
 
-        // backslash
+        // binder
+        if (accept(U'λ')) return comp().tok(loc_, Tok::Tag::B_lam);
+        if (accept(U'∀')) return comp().tok(loc_, Tok::Tag::B_forall);
         if (accept('\\')) {
             if (accept('/')) return comp().tok(loc_, Tok::Tag::B_forall);
             return comp().tok(loc_, Tok::Tag::B_lam);
@@ -155,39 +157,33 @@ Tok Lexer::lex() {
         if (accept('=')) {
             if (accept('=')) return comp().tok(loc_, Tok::Tag::O_eq);
             return comp().tok(loc_, Tok::Tag::O_assign);
-        }
-        if (accept('<')) {
+        } else if (accept('<')) {
             if (accept('<')) {
                 if (accept('=')) return comp().tok(loc_, Tok::Tag::O_shl_assign);
                 return comp().tok(loc_, Tok::Tag::O_shl);
             }
             if (accept('=')) return comp().tok(loc_, Tok::Tag::O_le);
             return comp().tok(loc_, Tok::Tag::O_lt);
-        }
-        if (accept('>')) {
+        } else if (accept('>')) {
             if (accept('>')) {
                 if (accept('=')) return comp().tok(loc_, Tok::Tag::O_shr_assign);
                 return comp().tok(loc_, Tok::Tag::O_shr);
             }
             if (accept('=')) return comp().tok(loc_, Tok::Tag::O_ge);
             return comp().tok(loc_, Tok::Tag::O_gt);
-        }
-        if (accept('+')) {
+        } else if (accept('+')) {
             if (accept('+')) return comp().tok(loc_, Tok::Tag::O_inc);
             if (accept('=')) return comp().tok(loc_, Tok::Tag::O_add_assign);
             return comp().tok(loc_, Tok::Tag::O_add);
-        }
-        if (accept('-')) {
+        } else if (accept('-')) {
             if (accept('>')) return comp().tok(loc_, Tok::Tag::O_arrow);
             if (accept('-')) return comp().tok(loc_, Tok::Tag::O_dec);
             if (accept('=')) return comp().tok(loc_, Tok::Tag::O_sub_assign);
             return comp().tok(loc_, Tok::Tag::O_sub);
-        }
-        if (accept('*')) {
+        } else if (accept('*')) {
             if (accept('=')) return comp().tok(loc_, Tok::Tag::O_mul_assign);
             return comp().tok(loc_, Tok::Tag::O_mul);
-        }
-        if (accept('/')) {
+        } else if (accept('/')) {
             // Handle comments here
             if (accept('*')) { eat_comments(); continue; }
             if (accept('/')) {
@@ -196,31 +192,26 @@ Tok Lexer::lex() {
             }
             if (accept('='))  return comp().tok(loc_, Tok::Tag::O_div_assign);
             return comp().tok(loc_, Tok::Tag::O_div);
-        }
-        if (accept('%')) {
+        } else if (accept('%')) {
             if (accept('=')) return comp().tok(loc_, Tok::Tag::O_rem_assign);
             return comp().tok(loc_, Tok::Tag::O_rem);
-        }
-        if (accept('&')) {
+        } else if (accept('&')) {
             if (accept('&')) return comp().tok(loc_, Tok::Tag::O_and_and);
             if (accept('=')) return comp().tok(loc_, Tok::Tag::O_and_assign);
             return comp().tok(loc_, Tok::Tag::O_and);
-        }
-        if (accept('|')) {
+        } else if (accept('|')) {
             if (accept('|')) return comp().tok(loc_, Tok::Tag::O_or_or);
             if (accept('=')) return comp().tok(loc_, Tok::Tag::O_or_assign);
             return comp().tok(loc_, Tok::Tag::O_or);
-        }
-        if (accept('^')) {
+        } else if (accept('^')) {
             if (accept('=')) return comp().tok(loc_, Tok::Tag::O_xor_assign);
             return comp().tok(loc_, Tok::Tag::O_xor);
-        }
-        if (accept('!')) {
+        } else if (accept('!')) {
             if (accept('=')) return comp().tok(loc_, Tok::Tag::O_ne);
             return comp().tok(loc_, Tok::Tag::O_not);
-        }
-        if (dec(peek()) || sgn(peek()))
+        } else if (dec(peek()) || sgn(peek())) {
             return parse_literal();
+        }
 
         // identifier
         if (accept_if(az_)) {

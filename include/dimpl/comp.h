@@ -100,9 +100,9 @@ constexpr auto Num_Keys  = size_t(0) DIMPL_KEY(CODE);
     m(P_comma,        ",")              \
     m(P_dot,          ".")              \
     m(P_semicolon,    ";")              \
-    /* backslash */                     \
-    m(B_lam,          "\\")             \
-    m(B_forall,       "\\/")
+    /* binder */                        \
+    m(B_lam,          "λ")              \
+    m(B_forall,       "∀")
 
 #define DIMPL_OPS(m) \
     m(O_inc,        "++",  Error,   "") \

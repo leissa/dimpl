@@ -10,7 +10,7 @@ using namespace dimpl;
 
 TEST(Lexer, Toks) {
     Comp comp;
-    std::istringstream is("{ } ( ) [ ] ‹ › « » : , . \\ \\/");
+    std::istringstream is("{ } ( ) [ ] ‹ › « » : , . \\ \\/ λ ∀");
     Lexer lexer(comp, is, "stdin");
 
     EXPECT_TRUE(lexer.lex().isa(Tok::Tag::D_brace_l));
@@ -26,6 +26,8 @@ TEST(Lexer, Toks) {
     EXPECT_TRUE(lexer.lex().isa(Tok::Tag::P_colon));
     EXPECT_TRUE(lexer.lex().isa(Tok::Tag::P_comma));
     EXPECT_TRUE(lexer.lex().isa(Tok::Tag::P_dot));
+    EXPECT_TRUE(lexer.lex().isa(Tok::Tag::B_lam));
+    EXPECT_TRUE(lexer.lex().isa(Tok::Tag::B_forall));
     EXPECT_TRUE(lexer.lex().isa(Tok::Tag::B_lam));
     EXPECT_TRUE(lexer.lex().isa(Tok::Tag::B_forall));
     EXPECT_TRUE(lexer.lex().isa(Tok::Tag::M_eof));
