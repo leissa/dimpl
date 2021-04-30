@@ -39,7 +39,7 @@ std::pair<const char*, const char*> app_ftag2str(FTag tag) {
 
 #if 0
 static bool is_cn_type(const Expr* expr) {
-    if (auto pi = expr->isa<PiExpr>(); pi && pi->returns_bottom())
+    if (auto pi = isa<PiExpr>(expr); pi && pi->returns_bottom())
         return true;
     return false;
 }
@@ -47,7 +47,7 @@ static bool is_cn_type(const Expr* expr) {
 static bool is_cn_type(const Ptrn* ptrn) { return is_cn_type(ptrn->type.get()); }
 
 static std::optional<std::pair<const Ptrn*, const Ptrn*>> dissect_ptrn(const Ptrn* ptrn) {
-    if (auto tup = ptrn->isa<TupPtrn>(); tup && tup->elems.size() == 2 && is_cn_type(tup->elems.back().get()) && tup->elems.back()->as<IdPtrn>()->sym() == "return")
+    if (auto tup = isa<TupPtrn>(ptrn); tup && tup->elems.size() == 2 && is_cn_type(tup->elems.back().get()) && <IdPtrn>(tup->elems.back()->)->sym() == "return")
         return std::optional(std::pair{tup->elems.front().get(), tup->elems.back().get()});
     return {};
 }
@@ -68,8 +68,13 @@ Stream& AbsNom::stream(Stream& s) const {
     s.fmt("{} ", abs_ftag2str(tag));
     if (!id->is_anonymous()) id->stream(s);
     if (meta) meta->stream(s);
-    if (dom)  dom ->stream(s);
-    return s.fmt(" -> {} {}", codom, body);
+    if (dom) s.fmt("{} ", dom);
+    if (comp.fancy && !isa<UnknownExpr>(codom)) s.fmt("-> {} ", codom);
+    if (isa<BlockExpr>(body))
+        s.fmt("{}", body);
+    else
+        s.fmt("{{ {} }}", body);
+    return s;
 }
 
 /*
@@ -78,7 +83,7 @@ Stream& AbsNom::stream(Stream& s) const {
 
 Stream& Ptrn::stream(Stream& s) const {
 #if 0
-    return type->isa<UnknownExpr>() ? s : s.fmt(": {}", type);
+    return isa<UnknownExpr>(type) ? s : s.fmt(": {}", type);
 #endif
     return s.fmt(": {}", type);
 }
@@ -137,8 +142,8 @@ Stream& BlockExpr::stream(Stream& s) const {
 Stream& PiExpr::stream(Stream& s) const {
 #if 0
     if (comp.fancy && is_cn_type(this)) {
-        if (auto sigma = dom->type->isa<SigmaExpr>(); sigma && sigma->elems.size() == 2 && is_cn_type(sigma->elems.back().get()))
-            return s.fmt("Fn {} -> {}", sigma->elems.front(), sigma->elems.back()->type->as<PiExpr>()->dom);
+        if (auto sigma = isa<SigmaExpr>(dom->type); sigma && sigma->elems.size() == 2 && is_cn_type(sigma->elems.back().get()))
+            return s.fmt("Fn {} -> {}", sigma->elems.front(), <PiExpr>(sigma->elems.back()->type->)->dom);
         return s.fmt("Cn {}", dom);
     }
     return s.fmt("\\/ {} -> {}", dom, codom);
@@ -155,7 +160,7 @@ Stream& TupExpr::Elem::stream(Stream& s) const {
 
 Stream& TupExpr::stream(Stream& s) const {
 #if 0
-    if (comp.fancy && type->isa<UnknownExpr>())
+    if (comp.fancy && isa<UnknownExpr>(type))
         return s.fmt("({, })", elems);
 #endif
     //return s.fmt("({, }): {}", elems, type);

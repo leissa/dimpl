@@ -89,7 +89,7 @@ Ptrs<T> make_ptrs(Args&&... args) {
  * base
  */
 
-struct AST : public thorin::RuntimeCast<AST>, thorin::Streamable<AST> {
+struct AST : public thorin::Streamable<AST> {
     AST(Comp& comp, Loc loc, int node)
         : comp(comp)
         , loc(loc)

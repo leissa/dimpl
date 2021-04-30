@@ -9,6 +9,8 @@ namespace dimpl {
 
 using namespace thorin::types;
 
+using thorin::as;
+using thorin::isa;
 using thorin::Loc;
 using thorin::Pos;
 using thorin::Stream;

@@ -47,11 +47,11 @@ void Scopes::insert(Decl decl) {
 
 void Scopes::bind_stmnts(const Ptrs<Stmnt>& stmnts) {
     for (auto i = stmnts.begin(), e = stmnts.end(); i != e;) {
-        if ((*i)->isa<NomStmnt>()) {
-            for (auto j = i; j != e && (*j)->isa<NomStmnt>(); ++j)
-                (*j)->as<NomStmnt>()->nom->bind_rec(*this);
-            for (; i != e && (*i)->isa<NomStmnt>(); ++i)
-                (*i)->as<NomStmnt>()->nom->bind(*this);
+        if (isa<NomStmnt>(*i)) {
+            for (auto j = i; j != e && isa<NomStmnt>(*j); ++j)
+                as<NomStmnt>(*j)->nom->bind_rec(*this);
+            for (; i != e && isa<NomStmnt>(*i); ++i)
+                as<NomStmnt>(*i)->nom->bind(*this);
         } else {
             (*i)->bind(*this);
             ++i;
