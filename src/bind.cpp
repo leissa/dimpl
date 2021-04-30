@@ -30,7 +30,7 @@ std::optional<Decl> Scopes::find(Sym sym) {
         if (auto i = scope.find(sym); i != scope.end())
             return i->second;
     }
-    return Decl();
+    return {};
 }
 
 void Scopes::insert(Decl decl) {
@@ -49,7 +49,7 @@ void Scopes::bind_stmnts(const Ptrs<Stmnt>& stmnts) {
     for (auto i = stmnts.begin(), e = stmnts.end(); i != e;) {
         if (isa<NomStmnt>(*i)) {
             for (auto j = i; j != e && isa<NomStmnt>(*j); ++j)
-                as<NomStmnt>(*j)->nom->bind_rec(*this);
+                insert(as<NomStmnt>(*j)->nom.get());
             for (; i != e && isa<NomStmnt>(*i); ++i)
                 as<NomStmnt>(*i)->nom->bind(*this);
         } else {
@@ -78,10 +78,13 @@ void Prg::bind(Scopes& s) const {
 void Nom::bind_rec(Scopes&) const {}
 
 void AbsNom::bind(Scopes& s) const {
+    s.push();
+    s.insert(this);
     if (meta) meta->bind(s);
     if (dom ) dom ->bind(s);
     body ->bind(s);
     codom->bind(s);
+    s.pop();
 }
 
 /*
