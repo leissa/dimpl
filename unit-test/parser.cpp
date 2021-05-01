@@ -42,7 +42,7 @@ TEST(Parser, Prec) {
 
     Comp comp;
     auto expr = parse_expr(comp, in);
-    thorin::StringStream s;
+    StringStream s;
     expr->stream(s);
 
     EXPECT_EQ(comp.num_errors(), 0);

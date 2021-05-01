@@ -33,9 +33,9 @@ TEST(Lexer, Toks) {
     EXPECT_TRUE(lexer.lex().isa(Tok::Tag::M_eof));
 }
 
-TEST(Lexer, LocId) {
+TEST(Lexer, Loc) {
     Comp comp;
-    std::istringstream is(" test  abc    def if  \nwhile   foo   ");
+    std::istringstream is(" test  abc    def if  \nwhile λ foo   ");
     Lexer lexer(comp, is, "stdin");
     auto t1 = lexer.lex();
     auto t2 = lexer.lex();
@@ -44,16 +44,18 @@ TEST(Lexer, LocId) {
     auto t5 = lexer.lex();
     auto t6 = lexer.lex();
     auto t7 = lexer.lex();
-    thorin::StringStream s;
-    s.fmt("{} {} {} {} {} {} {}", t1, t2, t3, t4, t5, t6, t7);
-    EXPECT_EQ(s.str(), "test abc def if while foo <eof>");
+    auto t8 = lexer.lex();
+    StringStream s;
+    s.fmt("{} {} {} {} {} {} {} {}", t1, t2, t3, t4, t5, t6, t7, t8);
+    EXPECT_EQ(s.str(), "test abc def if while λ foo <eof>");
     EXPECT_EQ(t1.loc(), Loc("stdin", {1,  2}, {1,  5}));
     EXPECT_EQ(t2.loc(), Loc("stdin", {1,  8}, {1, 10}));
     EXPECT_EQ(t3.loc(), Loc("stdin", {1, 15}, {1, 17}));
     EXPECT_EQ(t4.loc(), Loc("stdin", {1, 19}, {1, 20}));
     EXPECT_EQ(t5.loc(), Loc("stdin", {2,  1}, {2,  5}));
-    EXPECT_EQ(t6.loc(), Loc("stdin", {2,  9}, {2, 11}));
-    EXPECT_EQ(t7.loc(), Loc("stdin", {2, 14}, {2, 14}));
+    EXPECT_EQ(t6.loc(), Loc("stdin", {2,  7}, {2,  7}));
+    EXPECT_EQ(t7.loc(), Loc("stdin", {2,  9}, {2, 11}));
+    EXPECT_EQ(t8.loc(), Loc("stdin", {2, 14}, {2, 14}));
 }
 
 TEST(Lexer, Literals) {
