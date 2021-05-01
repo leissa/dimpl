@@ -7,7 +7,7 @@ Stream& Tok::stream(Stream& s) const {
         case Tok::Tag::L_s:  return s << s64();
         case Tok::Tag::L_u:  return s << u64();
         case Tok::Tag::L_f:  return s << f64();
-        default:       return s << sym();
+        default:             return s << sym();
     }
 }
 

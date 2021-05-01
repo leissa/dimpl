@@ -14,6 +14,11 @@ using thorin::isa;
 using thorin::Loc;
 using thorin::Pos;
 using thorin::Stream;
+using thorin::StringStream;
+using thorin::errf;
+using thorin::errln;
+using thorin::outf;
+using thorin::outln;
 
 template<class T> using Ptr  = std::unique_ptr<const T>;
 template<class T> using Ptrs = std::deque<Ptr<T>>;
@@ -237,31 +242,31 @@ public:
     template<class... Args>
     auto err(const char* fmt, Args&&... args) {
         ++num_errors_;
-        return thorin::errln(fmt, std::forward<Args&&>(args)...);
+        return errln(fmt, std::forward<Args&&>(args)...);
     }
     template<class... Args>
     auto warn(const char* fmt, Args&&... args) {
         ++num_warnings_;
-        return thorin::errln(fmt, std::forward<Args&&>(args)...);
+        return errln(fmt, std::forward<Args&&>(args)...);
     }
     template<class... Args>
     auto note(const char* fmt, Args&&... args) {
-        return thorin::errln(fmt, std::forward<Args&&>(args)...);
+        return errln(fmt, std::forward<Args&&>(args)...);
     }
 
     template<class... Args>
     auto err(Loc loc, const char* fmt, Args&&... args) {
-        thorin::errf("{}: error: ", loc);
+        errf("{}: error: ", loc);
         return err(fmt, std::forward<Args&&>(args)...);
     }
     template<class... Args>
     auto warn(Loc loc, const char* fmt, Args&&... args) {
-        thorin::errf("{}: warning: ", loc);
+        errf("{}: warning: ", loc);
         return err(fmt, std::forward<Args&&>(args)...);
     }
     template<class... Args>
     auto note(Loc loc, const char* fmt, Args&&... args) {
-        thorin::errf("{}: note: ", loc);
+        errf("{}: note: ", loc);
         return err(fmt, std::forward<Args&&>(args)...);
     }
     //@}
