@@ -3,8 +3,7 @@ project(dimpl VERSION 0.1)
 include(CTest)
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limited config" FORCE)
-
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 
 find_package(Thorin REQUIRED)
 
