@@ -34,8 +34,8 @@ public:
     /// @name misc
     //@{
     Ptr<Prg>  parse_prg();
-    Ptr<Id>   parse_id(const char* context = nullptr);
-    Ptr<Expr> parse_type_ascription(const char* ascription_context = nullptr);
+    Ptr<Id>   parse_id(const char* ctxt = nullptr);
+    Ptr<Expr> parse_type_ascr(const char* ascr_ctxt = nullptr);
     //@}
 
     /// @name nom
@@ -49,24 +49,24 @@ public:
     /// @name Ptrn%s
     //@{
     /**
-     * @p ascription_context
-     * If @c nullptr the type ascription @c :e is optional.
+     * @p ascr_ctxt
+     * If @c nullptr the type ascr @c :e is optional.
      * Otherwise, it is mandatory resulting in the given error message if not present.
      */
     ///other
-    Ptr<Ptrn>       parse_ptrn(const char* context, const char* ascription_context = nullptr);
+    Ptr<Ptrn>       parse_ptrn(const char* ctxt, const char* ascr_ctxt = nullptr);
     /// May also be an @p Expr which is intererpreted as an @p IdPtrn with an anonymous @p Id.
-    /// If @p ascription_context is not a @c nullptr the type ascription is mandatory.
+    /// If @p ascr_ctxt is not a @c nullptr the type ascr is mandatory.
     /// Otherwise, it's optional.
-    Ptr<Ptrn>       parse_ptrn_t(const char* ascription_context = nullptr);
-    Ptr<IdPtrn>     parse_id_ptrn(const char* ascription_context = nullptr);
-    Ptr<TupPtrn>  parse_tup_ptrn(const char* context, const char* ascription_context = nullptr,
-                                     Tok::Tag delim_l = Tok::Tag::D_paren_l);
+    Ptr<Ptrn>    parse_ptrn_t  (const char* ascr_ctxt = nullptr);
+    Ptr<IdPtrn>  parse_id_ptrn( const char* ascr_ctxt = nullptr);
+    Ptr<TupPtrn> parse_tup_ptrn(const char* ctxt, const char* ascr_ctxt = nullptr,
+                                 Tok::Tag delim_l = Tok::Tag::D_paren_l);
     //@}
 
     /// @name Expr%s
     //@{
-    Ptr<Expr>         parse_expr(const char* context, Tok::Prec = Tok::Prec::Bottom);
+    Ptr<Expr>         parse_expr(const char* ctxt, Tok::Prec = Tok::Prec::Bottom);
     Ptr<Expr>         parse_prefix_expr();
     Ptr<Expr>         parse_infix_expr(Tracker, Ptr<Expr>&&);
     Ptr<Expr>         parse_postfix_expr(Tracker, Ptr<Expr>&&);
@@ -76,10 +76,10 @@ public:
 
     /// @name primary Expr%s
     //@{
-    Ptr<Expr>       parse_primary_expr(const char* context);
+    Ptr<Expr>       parse_primary_expr(const char* ctxt);
     Ptr<AbsExpr>    parse_abs_expr();
     Ptr<ArExpr>     parse_ar_expr();
-    Ptr<BlockExpr>  parse_block_expr(const char* context);
+    Ptr<BlockExpr>  parse_block_expr(const char* ctxt);
     Ptr<BottomExpr> parse_bottom_expr();
     Ptr<ForExpr>    parse_for_expr();
     Ptr<IdExpr>     parse_id_expr();
@@ -101,47 +101,47 @@ public:
 private:
     /// @name make AST nodes
     //@{
-    Ptr<BottomExpr>   make_bottom_expr()      { return make_ptr<BottomExpr> (prev_); }
-    Ptr<BlockExpr>    make_empty_block_expr() { return make_ptr<BlockExpr>  (prev_, Ptrs<Stmnt>{}, make_unit_tup()); }
-    Ptr<ErrorExpr>    make_error_expr()       { return make_ptr<ErrorExpr>  (prev_); }
-    Ptr<TupExpr>    make_unit_tup()       { return make_ptr<TupExpr>  (prev_, Ptrs<TupExpr::Elem>{}, make_unknown_expr()); }
-    Ptr<UnknownExpr>  make_unknown_expr()     { return make_ptr<UnknownExpr>(prev_); }
+    Ptr<BottomExpr>   mk_bottom_expr()      { return mk_ptr<BottomExpr> (prev_); }
+    Ptr<BlockExpr>    mk_empty_block_expr() { return mk_ptr<BlockExpr>  (prev_, Ptrs<Stmnt>{}, mk_unit_tup()); }
+    Ptr<ErrorExpr>    mk_error_expr()       { return mk_ptr<ErrorExpr>  (prev_); }
+    Ptr<TupExpr>      mk_unit_tup()         { return mk_ptr<TupExpr>  (prev_, Ptrs<TupExpr::Elem>{}, mk_unknown_expr()); }
+    Ptr<UnknownExpr>  mk_unknown_expr()     { return mk_ptr<UnknownExpr>(prev_); }
 
     template<class T, class... Args>
-    Ptr<T> make_ptr(Args&&... args) { return std::make_unique<const T>(comp(), std::forward<Args&&>(args)...); }
+    Ptr<T> mk_ptr(Args&&... args) { return std::make_unique<const T>(comp(), std::forward<Args&&>(args)...); }
 
-    Ptr<TupExpr::Elem> make_tup_elem(Ptr<Expr>&& expr) {
+    Ptr<TupExpr::Elem> mk_tup_elem(Ptr<Expr>&& expr) {
         auto loc = expr->loc;
-        return make_ptr<TupExpr::Elem>(loc, make_ptr<Id>(comp().tok(loc)), std::move(expr));
+        return mk_ptr<TupExpr::Elem>(loc, mk_ptr<Id>(comp().tok(loc)), std::move(expr));
     }
 #if 0
-    Ptr<TupExpr>    make_tup(Ptr<Expr>&& lhs, Ptr<Expr>&& rhs) {
+    Ptr<TupExpr>    mk_tup(Ptr<Expr>&& lhs, Ptr<Expr>&& rhs) {
         auto loc = lhs->loc + rhs->loc;
-        auto args = make_ptrs<TupExpr::Elem>(make_tup_elem(std::move(lhs)), make_tup_elem(std::move(rhs)));
-        return make_ptr<TupExpr>(loc, std::move(args), make_unknown_expr());
+        auto args = mk_ptrs<TupExpr::Elem>(mk_tup_elem(std::move(lhs)), mk_tup_elem(std::move(rhs)));
+        return mk_ptr<TupExpr>(loc, std::move(args), mk_unknown_expr());
     }
 #endif
-    Ptr<Id>     make_id(const char* s)  { return make_ptr<Id>(prev_, comp().sym(s)); }
-    Ptr<IdPtrn> make_id_ptrn(const char* s, Ptr<Expr>&& type) {
+    Ptr<Id>     mk_id(const char* s)  { return mk_ptr<Id>(prev_, comp().sym(s)); }
+    Ptr<IdPtrn> mk_id_ptrn(const char* s, Ptr<Expr>&& type) {
         auto loc = type->loc;
-        return make_ptr<IdPtrn>(loc, make_id(s), std::move(type), true);
+        return mk_ptr<IdPtrn>(loc, mk_id(s), std::move(type), true);
     }
-    Ptr<IdPtrn>       make_id_ptrn(Ptr<Id>&& id) {
+    Ptr<IdPtrn>       mk_id_ptrn(Ptr<Id>&& id) {
         auto loc = id->loc;
-        return make_ptr<IdPtrn>(loc, std::move(id), make_unknown_expr(), false);
+        return mk_ptr<IdPtrn>(loc, std::move(id), mk_unknown_expr(), false);
     }
-    Ptr<PiExpr>   make_cn_type(Ptr<Ptrn>&& domain) {
+    Ptr<PiExpr>   mk_cn_type(Ptr<Ptrn>&& domain) {
         auto loc = domain->loc;
-        return make_ptr<PiExpr>(loc, FTag::Cn, std::move(domain), make_bottom_expr());
+        return mk_ptr<PiExpr>(loc, FTag::Cn, std::move(domain), mk_bottom_expr());
     }
     //@}
 
     const Tok& ahead(size_t i = 0) const { assert(i < max_ahead); return ahead_[i]; }
     Tok eat(Tok::Tag tag) { assert_unused(tag == ahead().tag() && "internal parser error"); return lex(); }
     bool accept(Tok::Tag tok);
-    bool expect(Tok::Tag tok, const char* context);
-    void err(const std::string& what, const char* context) { err(what, ahead(), context); }
-    void err(const std::string& what, const Tok& tok, const char* context);
+    bool expect(Tok::Tag tok, const char* ctxt);
+    void err(const std::string& what, const char* ctxt) { err(what, ahead(), ctxt); }
+    void err(const std::string& what, const Tok& tok, const char* ctxt);
 
     template<class F>
     auto parse_list(Tok::Tag delim_r, F f, Tok::Tag sep = Tok::Tag::P_comma) -> std::deque<decltype(f())> {
@@ -154,10 +154,10 @@ private:
         return result;
     }
     template<class F>
-    auto parse_list(const char* context, Tok::Tag delim_l, Tok::Tag delim_r, F f, Tok::Tag sep = Tok::Tag::P_comma) -> std::deque<decltype(f())>  {
+    auto parse_list(const char* ctxt, Tok::Tag delim_l, Tok::Tag delim_r, F f, Tok::Tag sep = Tok::Tag::P_comma) -> std::deque<decltype(f())>  {
         eat(delim_l);
         auto result = parse_list(delim_r, f, sep);
-        expect(delim_r, context);
+        expect(delim_r, ctxt);
         return result;
     }
 

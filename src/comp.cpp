@@ -23,7 +23,7 @@ bool Tok::is_lit() const {
 Tok::Prec Tok::tag2prec(Tag tag) {
     switch (tag) {
 #define CODE(t, str, prec, name) case Tag::t: return Prec::prec;
-        DIMPL_OPS(CODE)
+        DIMPL_OP(CODE)
 #undef CODE
         default: return Prec::Error;
     }
@@ -36,8 +36,11 @@ const char* Tok::tag2str(Tag tag) {
         DIMPL_LIT(CODE)
         DIMPL_TOK(CODE)
 #undef CODE
+#define CODE(t, str,       name) case Tag::t: return str;
+        DIMPL_ASSIGN(CODE)
+#undef CODE
 #define CODE(t, str, prec, name) case Tag::t: return str;
-        DIMPL_OPS(CODE)
+        DIMPL_OP(CODE)
 #undef CODE
         default: THORIN_UNREACHABLE;
     }
@@ -45,8 +48,11 @@ const char* Tok::tag2str(Tag tag) {
 
 const char* Tok::tag2name(Tag tag) {
     switch (tag) {
+#define CODE(t, str,       name) case Tag::t: return name;
+        DIMPL_ASSIGN(CODE)
+#undef CODE
 #define CODE(t, str, prec, name) case Tag::t: return name;
-        DIMPL_OPS(CODE)
+        DIMPL_OP(CODE)
 #undef CODE
         default: return "";
     }

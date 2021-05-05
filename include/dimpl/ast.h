@@ -300,6 +300,24 @@ struct Stmnt : public AST {
     //virtual void emit(Emitter&) const = 0;
 };
 
+struct AssignStmt : public Stmnt {
+    AssignStmt(Comp& comp, Loc loc, Ptr<Expr>&& lhs, Tok::Tag tag, Ptr<Expr>&& rhs)
+        : Stmnt(comp, loc, Node)
+        , lhs(std::move(lhs))
+        , tag(tag)
+        , rhs(std::move(rhs))
+    {}
+
+    Stream& stream(Stream& s) const override;
+    void bind(Scopes&) const override;
+    //void emit(Emitter&) const override;
+
+    Ptr<Expr> lhs;
+    Tok::Tag tag;
+    Ptr<Expr> rhs;
+    static constexpr auto Node = Node::ExprStmnt;
+};
+
 struct ExprStmnt : public Stmnt {
     ExprStmnt(Comp& comp, Loc loc, Ptr<Expr>&& expr)
         : Stmnt(comp, loc, Node)

@@ -1,6 +1,7 @@
 #include "dimpl/print.h"
 
 #include "thorin/util/array.h"
+#include "thorin/util/stream.h"
 
 #include "dimpl/ast.h"
 
@@ -175,8 +176,9 @@ Stream& TupExpr::stream(Stream& s) const {
  * Stmnt
  */
 
-Stream& ExprStmnt::stream(Stream& s) const { return s.fmt("{};", expr); }
-Stream& NomStmnt ::stream(Stream& s) const { return s.fmt("{}\n", nom); }
+Stream& ExprStmnt:: stream(Stream& s) const { return s.fmt("{};", expr); }
+Stream& AssignStmt::stream(Stream& s) const { return s.fmt("{} {} {};", lhs, Tok::tag2str(tag), rhs); }
+Stream& NomStmnt  ::stream(Stream& s) const { return s.fmt("{}\n", nom); }
 
 Stream& LetStmnt::stream(Stream& s) const {
     if (init)

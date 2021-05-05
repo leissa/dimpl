@@ -98,31 +98,21 @@ constexpr auto Num_Keys  = size_t(0) DIMPL_KEY(CODE);
     m(D_paren_r,      ")")              \
     m(D_quote_l,      "«")              \
     m(D_quote_r,      "»")              \
-    m(D_not_bracket_l, "![")             \
+    m(D_not_bracket_l, "![")            \
     /* punctation */                    \
     m(P_colon,        ":")              \
     m(P_colon_colon,  "::")             \
     m(P_comma,        ",")              \
     m(P_dot,          ".")              \
     m(P_semicolon,    ";")              \
+    m(P_arrow,        "->")             \
     /* binder */                        \
     m(B_lam,          "λ")              \
     m(B_forall,       "∀")
 
-#define DIMPL_OPS(m) \
+#define DIMPL_OP(m) \
     m(O_inc,        "++",  Error,   "") \
     m(O_dec,        "--",  Error,   "") \
-    m(O_assign,     "=",   Assign,  "") \
-    m(O_add_assign, "+=",  Assign,  "add_assign") \
-    m(O_sub_assign, "-=",  Assign,  "sub_assign") \
-    m(O_mul_assign, "*=",  Assign,  "mul_assign") \
-    m(O_div_assign, "/=",  Assign,  "div_assign") \
-    m(O_rem_assign, "%=",  Assign,  "rem_assign") \
-    m(O_shl_assign, "<<=", Assign,  "shl_assign") \
-    m(O_shr_assign, ">>=", Assign,  "shr_assign") \
-    m(O_and_assign, "&=",  Assign,  "bitand_assign") \
-    m(O_or_assign,  "|=",  Assign,  "bitor_assign") \
-    m(O_xor_assign, "^=",  Assign,  "bitxor_assign") \
     m(O_add,        "+",   Add,     "add") \
     m(O_sub,        "-",   Add,     "sub") \
     m(O_mul,        "*",   Mul,     "mul") \
@@ -143,7 +133,19 @@ constexpr auto Num_Keys  = size_t(0) DIMPL_KEY(CODE);
     m(O_gt,         ">",   Rel,     "gt") \
     m(O_eq,         "==",  Rel,     "eq") \
     m(O_ne,         "!=",  Rel,     "ne") \
-    m(O_arrow,      "->",  Arrow,   "")
+
+#define DIMPL_ASSIGN(m)                     \
+    m(A_assign,     "=",             "")    \
+    m(A_add_assign, "+=",  "add_assign")    \
+    m(A_sub_assign, "-=",  "sub_assign")    \
+    m(A_mul_assign, "*=",  "mul_assign")    \
+    m(A_div_assign, "/=",  "div_assign")    \
+    m(A_rem_assign, "%=",  "rem_assign")    \
+    m(A_shl_assign, "<<=", "shl_assign")    \
+    m(A_shr_assign, ">>=", "shr_assign")    \
+    m(A_and_assign, "&=",  "bitand_assign") \
+    m(A_or_assign,  "|=",  "bitor_assign")  \
+    m(A_xor_assign, "^=",  "bitxor_assign")
 
 class Tok : public thorin::Streamable<Sym> {
 public:
@@ -153,22 +155,23 @@ public:
         DIMPL_LIT(CODE)
         DIMPL_TOK(CODE)
 #undef CODE
+#define CODE(t, str,       name) t,
+        DIMPL_ASSIGN(CODE)
+#undef CODE
 #define CODE(t, str, prec, name) t,
-        DIMPL_OPS(CODE)
+        DIMPL_OP(CODE)
 #undef CODE
     };
 
     enum class Prec {
         Error,
         Bottom,
-        Assign,
         Hlt,
         OrOr, AndAnd,
         Rel,
         Or, Xor, And,
         Shift, Add, Mul,
         Unary,
-        Arrow,
     };
 
     Tok() {}
@@ -203,7 +206,6 @@ public:
     bool is_lit() const;
     Stream& stream(Stream&) const;
 
-    static bool is_right_to_left_assoc(Prec p) { return p == Prec::Arrow; }
     static Prec tag2prec(Tag);
     static const char* tag2str(Tag);
     static const char* tag2name(Tag );

@@ -188,6 +188,11 @@ void ArExpr::bind(Scopes& s) const {
  * Stmnt
  */
 
+void AssignStmt::bind(Scopes& s) const {
+    lhs->bind(s);
+    rhs->bind(s);
+}
+
 void ExprStmnt::bind(Scopes& s) const {
     expr->bind(s);
 }

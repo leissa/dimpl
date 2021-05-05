@@ -53,17 +53,17 @@ bool Parser::accept(Tok::Tag tag) {
     return true;
 }
 
-bool Parser::expect(Tok::Tag tag, const char* context) {
+bool Parser::expect(Tok::Tag tag, const char* ctxt) {
     if (ahead().tag() == tag) {
         lex();
         return true;
     }
-    err(Tok::tag2str(tag), context);
+    err(Tok::tag2str(tag), ctxt);
     return false;
 }
 
-void Parser::err(const std::string& what, const Tok& tok, const char* context) {
-    comp().err(tok.loc(), "expected {}, got '{}' while parsing {}", what, tok, context);
+void Parser::err(const std::string& what, const Tok& tok, const char* ctxt) {
+    comp().err(tok.loc(), "expected '{}, got '{}' while parsing {}", what, tok, ctxt);
 }
 
 /*
@@ -84,22 +84,22 @@ Ptr<Prg> Parser::parse_prg() {
         }
     }
 
-    return make_ptr<Prg>(track, std::move(stmnts));
+    return mk_ptr<Prg>(track, std::move(stmnts));
 }
 
-Ptr<Id> Parser::parse_id(const char* context) {
-    if (ahead().isa(Tok::Tag::M_id)) return make_ptr<Id>(eat(Tok::Tag::M_id));
-    err("identifier", context);
-    return make_ptr<Id>(comp().tok(prev_, "<error>"));
+Ptr<Id> Parser::parse_id(const char* ctxt) {
+    if (ahead().isa(Tok::Tag::M_id)) return mk_ptr<Id>(eat(Tok::Tag::M_id));
+    err("identifier", ctxt);
+    return mk_ptr<Id>(comp().tok(prev_, "<error>"));
 }
 
-Ptr<Expr> Parser::parse_type_ascription(const char* ascription_context) {
-    if (ascription_context) {
-        expect(Tok::Tag::P_colon, ascription_context);
-        return parse_expr("type ascription", Tok::Prec::Arrow);
+Ptr<Expr> Parser::parse_type_ascr(const char* ascr_ctxt) {
+    if (ascr_ctxt) {
+        expect(Tok::Tag::P_colon, ascr_ctxt);
+        return parse_expr("type ascription");
     }
 
-    return accept(Tok::Tag::P_colon) ? parse_expr("type ascription", Tok::Prec::Arrow) : make_unknown_expr();
+    return accept(Tok::Tag::P_colon) ? parse_expr("type ascription") : mk_unknown_expr();
 }
 
 /*
@@ -122,20 +122,21 @@ Ptr<NomNom> Parser::parse_nom_nom() {
     auto track = tracker();
     eat(Tok::Tag::K_nom);
     auto id = parse_id("nominal");
-    auto type = parse_type_ascription("type ascription of a nominal");
+    auto type = parse_type_ascr("type ascription of a nominal");
+    expect(Tok::Tag::A_assign, "nominal");
     auto body = parse_expr("body of a nominal");
-    return make_ptr<NomNom>(track, std::move(id), std::move(type), std::move(body));
+    return mk_ptr<NomNom>(track, std::move(id), std::move(type), std::move(body));
 }
 
 Ptr<AbsNom> Parser::parse_abs_nom() {
     auto track = tracker();
     auto tag = tag2ftag(lex().tag());
-    auto id = ahead().isa(Tok::Tag::M_id) ? parse_id() : make_id("_");
+    auto id = ahead().isa(Tok::Tag::M_id) ? parse_id() : mk_id("_");
     auto meta = ahead().isa(Tok::Tag::D_bracket_l) ? parse_tup_ptrn(nullptr, nullptr, Tok::Tag::D_bracket_l) : nullptr;
     auto dom = tag == FTag::DS ? nullptr : parse_tup_ptrn("domain of a function");
-    auto codom = accept(Tok::Tag::O_arrow) ? parse_expr("codomain of an function", Tok::Prec::Arrow) : make_unknown_expr();
+    auto codom = accept(Tok::Tag::P_arrow) ? parse_expr("codomain of an function") : mk_unknown_expr();
     auto body = parse_expr("body of a function");
-    return make_ptr<AbsNom>(track, tag, std::move(id), std::move(meta), std::move(dom), std::move(codom), std::move(body));
+    return mk_ptr<AbsNom>(track, tag, std::move(id), std::move(meta), std::move(dom), std::move(codom), std::move(body));
 }
 
 Ptr<SigNom> Parser::parse_sig_nom() {
@@ -146,55 +147,55 @@ Ptr<SigNom> Parser::parse_sig_nom() {
  * Ptrn
  */
 
-Ptr<Ptrn> Parser::parse_ptrn(const char* context, const char* ascription_context) {
+Ptr<Ptrn> Parser::parse_ptrn(const char* ctxt, const char* ascr_ctxt) {
     switch (ahead().tag()) {
-        case Tok::Tag::M_id:      return parse_id_ptrn(ascription_context);
-        case Tok::Tag::D_paren_l: return parse_tup_ptrn(ascription_context);
+        case Tok::Tag::M_id:      return parse_id_ptrn(ascr_ctxt);
+        case Tok::Tag::D_paren_l: return parse_tup_ptrn(ascr_ctxt);
         default:
-            err("pattern", context);
-            return make_ptr<ErrorPtrn>(prev_);
+            err("pattern", ctxt);
+            return mk_ptr<ErrorPtrn>(prev_);
     }
 }
 
-Ptr<Ptrn> Parser::parse_ptrn_t(const char* ascription_context) {
+Ptr<Ptrn> Parser::parse_ptrn_t(const char* ascr_ctxt) {
     if ((ahead(0).isa(Tok::Tag::M_id) && ahead(1).isa(Tok::Tag::P_colon)) // IdPtrn
             || ahead().isa(Tok::Tag::D_paren_l)) {                        // TupPtrn
-        return parse_ptrn(nullptr, ascription_context);
+        return parse_ptrn(nullptr, ascr_ctxt);
     }
 
     auto track = tracker();
     auto type = parse_expr("type");
-    return make_ptr<IdPtrn>(track, make_id("_"), std::move(type), true);
+    return mk_ptr<IdPtrn>(track, mk_id("_"), std::move(type), true);
 }
 
-Ptr<IdPtrn> Parser::parse_id_ptrn(const char* ascription_context) {
+Ptr<IdPtrn> Parser::parse_id_ptrn(const char* ascr_ctxt) {
     auto track = tracker();
     auto id = parse_id();
-    auto type = parse_type_ascription(ascription_context);
-    return make_ptr<IdPtrn>(track, std::move(id), std::move(type), bool(ascription_context));
+    auto type = parse_type_ascr(ascr_ctxt);
+    return mk_ptr<IdPtrn>(track, std::move(id), std::move(type), bool(ascr_ctxt));
 }
 
-Ptr<TupPtrn> Parser::parse_tup_ptrn(const char* context, const char* ascription_context, Tok::Tag delim_l) {
+Ptr<TupPtrn> Parser::parse_tup_ptrn(const char* /*ctxt*/, const char* ascr_ctxt, Tok::Tag delim_l) {
 #if 0
     if (!ahead().isa(delim_l)) {
-        err("tup pattern", context);
-        return make_ptr<TupPtrn>(prev_, make_ptrs<Ptrn>(), make_unknown_expr(), false);
+        err("tup pattern", ctxt);
+        return mk_ptr<TupPtrn>(prev_, mk_ptrs<Ptrn>(), mk_unknown_expr(), false);
     }
 #endif
     auto track = tracker();
     auto delim_r = delim_l == Tok::Tag::D_bracket_l ? Tok::Tag::D_bracket_r : Tok::Tag::D_paren_r;
     auto ptrns = parse_list("tuple pattern", delim_l, delim_r, [&]{ return parse_ptrn("sub-pattern of a tuple pattern"); });
-    auto type = parse_type_ascription(ascription_context);
-    return make_ptr<TupPtrn>(track, std::move(ptrns), std::move(type), bool(ascription_context));
+    auto type = parse_type_ascr(ascr_ctxt);
+    return mk_ptr<TupPtrn>(track, std::move(ptrns), std::move(type), bool(ascr_ctxt));
 }
 
 /*
  * Expr
  */
 
-Ptr<Expr> Parser::parse_expr(const char* context, Tok::Prec p) {
+Ptr<Expr> Parser::parse_expr(const char* ctxt, Tok::Prec p) {
     auto track = tracker();
-    auto lhs = parse_primary_expr(context);
+    auto lhs = parse_primary_expr(ctxt);
 
     while (true) {
         switch (ahead().tag()) {
@@ -207,7 +208,7 @@ Ptr<Expr> Parser::parse_expr(const char* context, Tok::Prec p) {
             default: break;
         }
 
-        if (auto q = Tok::tag2prec(ahead().tag()); p < q || (p == q && Tok::is_right_to_left_assoc(p)))
+        if (auto q = Tok::tag2prec(ahead().tag()); p < q)
             lhs = parse_infix_expr(track, std::move(lhs));
         else
             break;
@@ -220,39 +221,39 @@ Ptr<Expr> Parser::parse_prefix_expr() {
     auto track = tracker();
     auto tag = lex().tag();
     auto rhs = parse_expr("right-hand side of a unary expression", Tok::Prec::Unary);
-    return make_ptr<PrefixExpr>(track, tag, std::move(rhs));
+    return mk_ptr<PrefixExpr>(track, tag, std::move(rhs));
 }
 
 Ptr<Expr> Parser::parse_infix_expr(Tracker track, Ptr<Expr>&& lhs) {
     auto tag = lex().tag();
     auto rhs = parse_expr("right-hand side of a binary expression", Tok::tag2prec(tag));
-    return make_ptr<InfixExpr>(track, std::move(lhs), tag, std::move(rhs));
+    return mk_ptr<InfixExpr>(track, std::move(lhs), tag, std::move(rhs));
 }
 
 Ptr<Expr> Parser::parse_postfix_expr(Tracker track, Ptr<Expr>&& lhs) {
     auto tag = lex().tag();
-    return make_ptr<PostfixExpr>(track, std::move(lhs), tag);
+    return mk_ptr<PostfixExpr>(track, std::move(lhs), tag);
 }
 
 Ptr<AppExpr> Parser::parse_app_expr(Tracker track, Ptr<Expr>&& callee) {
     auto delim_l = ahead().tag();
-    return make_ptr<AppExpr>(track, tag2ftag(delim_l), std::move(callee), parse_tup_expr(delim_l));
+    return mk_ptr<AppExpr>(track, tag2ftag(delim_l), std::move(callee), parse_tup_expr(delim_l));
 }
 
 Ptr<FieldExpr> Parser::parse_field_expr(Tracker track, Ptr<Expr>&& lhs) {
     eat(Tok::Tag::P_dot);
     auto id = parse_id("field expression");
-    return make_ptr<FieldExpr>(track, std::move(lhs), std::move(id));
+    return mk_ptr<FieldExpr>(track, std::move(lhs), std::move(id));
 }
 
 /*
  * primary Expr
  */
 
-Ptr<Expr> Parser::parse_primary_expr(const char* context) {
+Ptr<Expr> Parser::parse_primary_expr(const char* ctxt) {
     switch (ahead().tag()) {
         case Tok::Tag::K_kind:
-        case Tok::Tag::K_type:      return make_ptr<KeyExpr>(lex());
+        case Tok::Tag::K_type:      return mk_ptr<KeyExpr>(lex());
         case Tok::Tag::O_add:
         case Tok::Tag::O_and:
         case Tok::Tag::O_dec:
@@ -283,19 +284,19 @@ Ptr<Expr> Parser::parse_primary_expr(const char* context) {
         case Tok::Tag::L_u:         return nullptr; // TODO
         case Tok::Tag::M_id:        return parse_id_expr();
         default:
-            err("expression", context ? context : "primary expression");
-            return make_error_expr();
+            err("expression", ctxt ? ctxt : "primary expression");
+            return mk_error_expr();
     }
 }
 
 Ptr<AbsExpr> Parser::parse_abs_expr() {
-    return make_ptr<AbsExpr>(parse_abs_nom());
+    return mk_ptr<AbsExpr>(parse_abs_nom());
 }
 
-Ptr<BlockExpr> Parser::parse_block_expr(const char* context) {
+Ptr<BlockExpr> Parser::parse_block_expr(const char* ctxt) {
     if (!ahead().isa(Tok::Tag::D_brace_l)) {
-        err("block expression", context);
-        return make_empty_block_expr();
+        err("block expression", ctxt);
+        return mk_empty_block_expr();
     }
 
     auto track = tracker();
@@ -308,8 +309,9 @@ Ptr<BlockExpr> Parser::parse_block_expr(const char* context) {
             case Tok__Tag__Nom:         stmnts.emplace_back(parse_nom_stmnt()); continue;
             case Tok::Tag::K_let:       stmnts.emplace_back(parse_let_stmnt()); continue;
             case Tok::Tag::D_brace_r:   {
-                final_expr = make_unit_tup();
-                return make_ptr<BlockExpr>(track, std::move(stmnts), make_unit_tup());
+                final_expr = mk_unit_tup();
+                eat(Tok::Tag::D_brace_r);
+                return mk_ptr<BlockExpr>(track, std::move(stmnts), mk_unit_tup());
             }
             default: {
                 auto expr_track = tracker();
@@ -324,22 +326,36 @@ Ptr<BlockExpr> Parser::parse_block_expr(const char* context) {
                     default:                  expr = parse_expr("block expression"); stmnt_like = false;
                 }
 
-                if (accept(Tok::Tag::P_semicolon) || (stmnt_like && !ahead().isa(Tok::Tag::D_brace_r))) {
-                    stmnts.emplace_back(make_ptr<ExprStmnt>(expr_track, std::move(expr)));
-                    continue;
+                switch (ahead().tag()) {
+#define CODE(t, str, name) \
+                    case Tok::Tag::t:
+DIMPL_ASSIGN(CODE)  {
+                        auto tag = lex().tag();
+                        auto rhs = parse_expr("right-hand side of an assignment statement");
+                        stmnts.emplace_back(mk_ptr<AssignStmt>(expr_track, std::move(expr), tag, std::move(rhs)));
+                        continue;
+                    }
+                    case Tok::Tag::P_semicolon:
+                        stmnts.emplace_back(mk_ptr<ExprStmnt>(expr_track, std::move(expr)));
+                        continue;
+                    default:
+                        if (stmnt_like && !ahead().isa(Tok::Tag::D_brace_r)) {
+                            stmnts.emplace_back(mk_ptr<ExprStmnt>(expr_track, std::move(expr)));
+                            continue;
+                        }
+#undef CODE
                 }
 
                 swap(final_expr, expr);
-
                 expect(Tok::Tag::D_brace_r, "block expression");
-                return make_ptr<BlockExpr>(track, std::move(stmnts), std::move(final_expr));
+                return mk_ptr<BlockExpr>(track, std::move(stmnts), std::move(final_expr));
             }
         }
     }
 }
 
 Ptr<IdExpr> Parser::parse_id_expr() {
-    return make_ptr<IdExpr>(parse_id());
+    return mk_ptr<IdExpr>(parse_id());
 }
 
 Ptr<IfExpr> Parser::parse_if_expr() {
@@ -349,9 +365,9 @@ Ptr<IfExpr> Parser::parse_if_expr() {
     auto then_expr = parse_block_expr("consequence of an if expression");
     auto else_expr = accept(Tok::Tag::K_else)
         ? (ahead().isa(Tok::Tag::K_if) ? (Ptr<Expr>)parse_if_expr() : (Ptr<Expr>)parse_block_expr("alternative of an if expression"))
-        : make_empty_block_expr();
+        : mk_empty_block_expr();
 
-    return make_ptr<IfExpr>(track, std::move(cond), std::move(then_expr), std::move(else_expr));
+    return mk_ptr<IfExpr>(track, std::move(cond), std::move(then_expr), std::move(else_expr));
 }
 
 Ptr<ForExpr> Parser::parse_for_expr() {
@@ -371,7 +387,7 @@ Ptr<PkExpr> Parser::parse_pk_expr() {
     auto body = parse_expr("body of a pack");
     expect(Tok::Tag::D_paren_r, "closing delimiter of a pack");
 
-    return make_ptr<PkExpr>(track, std::move(doms), std::move(body));
+    return mk_ptr<PkExpr>(track, std::move(doms), std::move(body));
 }
 
 Ptr<PiExpr> Parser::parse_pi_expr() {
@@ -381,17 +397,17 @@ Ptr<PiExpr> Parser::parse_pi_expr() {
 
     Ptr<Expr> codom;
     if (tag != FTag::Cn) {
-        expect(Tok::Tag::O_arrow, "for-all type");
-        codom = parse_expr("codomain", Tok::Prec::Arrow);
+        expect(Tok::Tag::P_arrow, "for-all type");
+        codom = parse_expr("codomain");
     }
 
-    return make_ptr<PiExpr>(track, tag, std::move(dom), std::move(codom));
+    return mk_ptr<PiExpr>(track, tag, std::move(dom), std::move(codom));
 }
 
 Ptr<SigmaExpr> Parser::parse_sigma_expr() {
     auto track = tracker();
     auto elems = parse_list("sigma", Tok::Tag::D_bracket_l, Tok::Tag::D_bracket_r, [&]{ return parse_ptrn_t("type ascription of a sigma element"); });
-    return make_ptr<SigmaExpr>(track, std::move(elems));
+    return mk_ptr<SigmaExpr>(track, std::move(elems));
 }
 
 Ptr<TupExpr> Parser::parse_tup_expr(Tok::Tag delim_l) {
@@ -400,18 +416,18 @@ Ptr<TupExpr> Parser::parse_tup_expr(Tok::Tag delim_l) {
     auto elems = parse_list("tuple", delim_l, delim_r, [&]{
         auto track = tracker();
         Ptr<Id> id;
-        if (ahead(0).isa(Tok::Tag::M_id) && ahead(1).isa(Tok::Tag::O_assign)) {
+        if (ahead(0).isa(Tok::Tag::M_id) && ahead(1).isa(Tok::Tag::A_assign)) {
             id = parse_id();
-            eat(Tok::Tag::O_assign);
+            eat(Tok::Tag::A_assign);
         } else {
-            id = make_id("_");
+            id = mk_id("_");
         }
         auto expr = parse_expr("tuple element");
-        return make_ptr<TupExpr::Elem>(track, std::move(id), std::move(expr));
+        return mk_ptr<TupExpr::Elem>(track, std::move(id), std::move(expr));
     });
 
-    auto type = parse_type_ascription();
-    return make_ptr<TupExpr>(track, std::move(elems), std::move(type));
+    auto type = parse_type_ascr();
+    return mk_ptr<TupExpr>(track, std::move(elems), std::move(type));
 }
 
 Ptr<ArExpr> Parser::parse_ar_expr() {
@@ -423,7 +439,7 @@ Ptr<ArExpr> Parser::parse_ar_expr() {
     auto body = parse_expr("body of an array");
     expect(Tok::Tag::D_bracket_r, "closing delimiter of an array");
 
-    return make_ptr<ArExpr>(track, std::move(doms), std::move(body));
+    return mk_ptr<ArExpr>(track, std::move(doms), std::move(body));
 }
 
 Ptr<WhileExpr> Parser::parse_while_expr() {
@@ -439,15 +455,15 @@ Ptr<LetStmnt> Parser::parse_let_stmnt() {
     eat(Tok::Tag::K_let);
     auto ptrn = parse_ptrn("let statement");
     Ptr<Expr> init;
-    if (accept(Tok::Tag::O_assign))
+    if (accept(Tok::Tag::A_assign))
         init = parse_expr("initialization expression of a let statement");
     expect(Tok::Tag::P_semicolon, "the end of an let statement");
-    return make_ptr<LetStmnt>(track, std::move(ptrn), std::move(init));
+    return mk_ptr<LetStmnt>(track, std::move(ptrn), std::move(init));
 }
 
 Ptr<NomStmnt> Parser::parse_nom_stmnt() {
     auto track = tracker();
-    return make_ptr<NomStmnt>(track, parse_nom());
+    return mk_ptr<NomStmnt>(track, parse_nom());
 }
 
 //------------------------------------------------------------------------------
