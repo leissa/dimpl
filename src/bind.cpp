@@ -77,6 +77,11 @@ void Prg::bind(Scopes& s) const {
 
 void Nom::bind_rec(Scopes&) const {}
 
+void NomNom::bind(Scopes& s) const {
+    type->bind(s);
+    body->bind(s);
+}
+
 void AbsNom::bind(Scopes& s) const {
     s.push();
     s.insert(this);

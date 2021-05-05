@@ -64,6 +64,10 @@ Stream& Id ::stream(Stream& s) const { return s.fmt("{}", sym); }
  * nom
  */
 
+Stream& NomNom::stream(Stream& s) const {
+    return s.fmt("nom {}: {} = {}", id, type, body);
+}
+
 Stream& AbsNom::stream(Stream& s) const {
     s.fmt("{} ", abs_ftag2str(tag));
     if (!id->is_anonymous()) id->stream(s);

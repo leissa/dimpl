@@ -208,6 +208,7 @@ Tok Lexer::lex() {
             return comp().tok(loc_, Tok::Tag::O_xor);
         } else if (accept('!')) {
             if (accept('=')) return comp().tok(loc_, Tok::Tag::O_ne);
+            if (accept('[')) return comp().tok(loc_, Tok::Tag::D_not_bracket_l);
             return comp().tok(loc_, Tok::Tag::O_not);
         } else if (dec(peek()) || sgn(peek())) {
             return parse_literal();

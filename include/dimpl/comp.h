@@ -98,7 +98,7 @@ constexpr auto Num_Keys  = size_t(0) DIMPL_KEY(CODE);
     m(D_paren_r,      ")")              \
     m(D_quote_l,      "«")              \
     m(D_quote_r,      "»")              \
-    m(D_bang_paren_l, "!(")             \
+    m(D_not_bracket_l, "![")             \
     /* punctation */                    \
     m(P_colon,        ":")              \
     m(P_colon_colon,  "::")             \

@@ -8,13 +8,13 @@ static FTag tag2ftag(Tok::Tag tag) {
     switch (tag) {
         case Tok::Tag::B_forall:
         case Tok::Tag::B_lam:
-        case Tok::Tag::D_bracket_l:    return FTag::DS;
+        case Tok::Tag::D_bracket_l:     return FTag::DS;
         case Tok::Tag::K_Fn:
         case Tok::Tag::K_fn:
-        case Tok::Tag::D_paren_l:      return FTag::Fn;
+        case Tok::Tag::D_paren_l:       return FTag::Fn;
         case Tok::Tag::K_Cn:
         case Tok::Tag::K_cn:
-        case Tok::Tag::D_bang_paren_l: return FTag::Cn;
+        case Tok::Tag::D_not_bracket_l: return FTag::Cn;
         default: THORIN_UNREACHABLE;
     }
 }
@@ -119,7 +119,12 @@ Ptr<Nom> Parser::parse_nom() {
 }
 
 Ptr<NomNom> Parser::parse_nom_nom() {
-    return nullptr;
+    auto track = tracker();
+    eat(Tok::Tag::K_nom);
+    auto id = parse_id("nominal");
+    auto type = parse_type_ascription("type ascription of a nominal");
+    auto body = parse_expr("body of a nominal");
+    return make_ptr<NomNom>(track, std::move(id), std::move(type), std::move(body));
 }
 
 Ptr<AbsNom> Parser::parse_abs_nom() {
@@ -194,7 +199,7 @@ Ptr<Expr> Parser::parse_expr(const char* context, Tok::Prec p) {
     while (true) {
         switch (ahead().tag()) {
             case Tok::Tag::P_dot:       lhs = parse_field_expr  (track, std::move(lhs)); continue;
-            //case Tok::Tag::D_cps_paran_l:
+            case Tok::Tag::D_not_bracket_l:
             case Tok::Tag::D_paren_l:
             case Tok::Tag::D_bracket_l: lhs = parse_app_expr    (track, std::move(lhs)); continue;
             case Tok::Tag::O_inc:
