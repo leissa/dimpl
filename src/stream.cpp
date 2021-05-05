@@ -96,7 +96,7 @@ Stream& Ptrn::stream(Stream& s) const {
 Stream& IdPtrn::stream(Stream& s) const {
     if (type_mandatory && comp.is_anonymous(id->sym))
         return s.fmt("{}", type);
-    return s.fmt("{}", id);
+    return s.fmt("{}: {}", id, type);
 #if 0
     return stream_ascription(p);
 #endif
