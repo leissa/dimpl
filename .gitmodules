@@ -1,0 +1,6 @@
+[submodule "extern/thorin"]
+	path = extern/thorin
+	url = git@github.com:leissa/thorin.git
+[submodule "extern/half"]
+	path = extern/half
+	url = git@github.com:AnyDSL/half.git
