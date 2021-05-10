@@ -12,7 +12,7 @@ if(EXISTS "${LOC_PATH}")
 endif()
 
 # Find me some packages
-find_package(Thorin REQUIRED)
+find_package(Thorin REQUIRED PATHS ${PROJECT_SOURCE_DIR}/extern/thorin/build/share/anydsl/cmake/)
 
 # Take care of version information
 configure_file("${PROJECT_SOURCE_DIR}/include/dimpl/version.h.in" "${PROJECT_SOURCE_DIR}/include/dimpl/version.h")
