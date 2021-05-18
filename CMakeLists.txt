@@ -11,9 +11,6 @@ if(EXISTS "${LOC_PATH}")
     message(FATAL_ERROR "You cannot build in a source directory (or any directory with a CMakeLists.txt file). Please make a build subdirectory. Feel free to remove CMakeCache.txt and CMakeFiles.")
 endif()
 
-# Find me some packages
-find_package(Thorin REQUIRED PATHS ${PROJECT_SOURCE_DIR}/extern/thorin/build/share/anydsl/cmake/)
-
 # Take care of version information
 configure_file("${PROJECT_SOURCE_DIR}/include/dimpl/version.h.in" "${PROJECT_SOURCE_DIR}/include/dimpl/version.h")
 
@@ -38,9 +35,12 @@ if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
     endif()
 endif()
 
-if(NOT EXISTS "${PROJECT_SOURCE_DIR}/extern/repo/CMakeLists.txt")
+if(NOT EXISTS "${PROJECT_SOURCE_DIR}/thorin/CMakeLists.txt")
     message(FATAL_ERROR "The submodules were not downloaded! GIT_SUBMODULE was turned off or failed. Please update submodules and try again.")
 endif()
+
+# Find me some packages
+find_package(Thorin REQUIRED PATHS ${PROJECT_SOURCE_DIR}/thorin/build/share/anydsl/cmake/)
 
 # Take care of libraries
 add_subdirectory(src)
