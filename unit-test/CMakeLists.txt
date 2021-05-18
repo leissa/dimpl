@@ -21,7 +21,8 @@ include(GoogleTest)
 # Macro for adding tests
 macro(package_add_test TESTNAME)
     add_executable(${TESTNAME} ${ARGN})
-    target_link_libraries(${TESTNAME} gtest gmock gtest_main)
+    target_include_directories(${TESTNAME} PUBLIC ${Thorin_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+    target_link_libraries(${TESTNAME} gtest gmock gtest_main libdimpl)
     gtest_discover_tests(${TESTNAME}
         WORKING_DIRECTORY ${PROJECT_DIR}
         PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${PROJECT_DIR}"
@@ -29,7 +30,7 @@ macro(package_add_test TESTNAME)
     set_target_properties(${TESTNAME} PROPERTIES FOLDER tests)
 endmacro()
 
-package_add_test(unit-test
+package_add_test(dimpl-unit-test
     test.cpp
     lexer.cpp
     parser.cpp
