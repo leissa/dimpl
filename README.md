@@ -1,5 +1,16 @@
 # Dimpl
 
+## Building
+
+```
+git clone --recurse-submodules git@github.com:leissa/dimpl.git
+cd dimpl
+mkdir build
+cd build
+cmake ..
+make
+```
+
 ## Syntax
 
 ```ebnf
