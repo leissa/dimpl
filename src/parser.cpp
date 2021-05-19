@@ -70,12 +70,12 @@ bool Parser::expect(Tok::Tag tag, const char* ctxt) {
         lex();
         return true;
     }
-    err(Tok::tag2str(tag), ctxt);
+    err(std::string("'") + Tok::tag2str(tag) + std::string("'"), ctxt);
     return false;
 }
 
 void Parser::err(const std::string& what, const Tok& tok, const char* ctxt) {
-    comp().err(tok.loc(), "expected '{}, got '{}' while parsing {}", what, tok, ctxt);
+    comp().err(tok.loc(), "expected {}, got '{}' while parsing {}", what, tok, ctxt);
 }
 
 /*
