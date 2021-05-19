@@ -19,12 +19,24 @@ static FTag tag2ftag(Tok::Tag tag) {
     }
 }
 
-#define Tok__Tag__Nom Tok::Tag::K_nom:    \
-                 case Tok::Tag::B_lam:    \
-                 case Tok::Tag::K_cn:     \
-                 case Tok::Tag::K_fn:     \
-                 case Tok::Tag::K_struct: \
-                 case Tok::Tag::K_trait
+#define Tok__Tag__Assign Tok::Tag::A_assign:    \
+                    case Tok::Tag::A_add_assign: \
+                    case Tok::Tag::A_sub_assign: \
+                    case Tok::Tag::A_mul_assign: \
+                    case Tok::Tag::A_div_assign: \
+                    case Tok::Tag::A_rem_assign: \
+                    case Tok::Tag::A_shl_assign: \
+                    case Tok::Tag::A_shr_assign: \
+                    case Tok::Tag::A_and_assign: \
+                    case Tok::Tag::A_xor_assign: \
+                    case Tok::Tag::A_or_assign
+
+#define Tok__Tag__Nom    Tok::Tag::K_nom:    \
+                    case Tok::Tag::B_lam:    \
+                    case Tok::Tag::K_cn:     \
+                    case Tok::Tag::K_fn:     \
+                    case Tok::Tag::K_struct: \
+                    case Tok::Tag::K_trait
 
 Parser::Parser(Comp& comp, std::istream& stream, const char* file)
     : lexer_(comp, stream, file)
@@ -327,12 +339,11 @@ Ptr<BlockExpr> Parser::parse_block_expr(const char* ctxt) {
                 }
 
                 switch (ahead().tag()) {
-#define CODE(t, str, name) \
-                    case Tok::Tag::t:
-DIMPL_ASSIGN(CODE)  {
+                    case Tok__Tag__Assign: {
                         auto tag = lex().tag();
                         auto rhs = parse_expr("right-hand side of an assignment statement");
                         stmnts.emplace_back(mk_ptr<AssignStmt>(expr_track, std::move(expr), tag, std::move(rhs)));
+                        expect(Tok::Tag::P_semicolon, "the end of an assignment statement");
                         continue;
                     }
                     case Tok::Tag::P_semicolon:
@@ -343,7 +354,6 @@ DIMPL_ASSIGN(CODE)  {
                             stmnts.emplace_back(mk_ptr<ExprStmnt>(expr_track, std::move(expr)));
                             continue;
                         }
-#undef CODE
                 }
 
                 swap(final_expr, expr);
@@ -457,7 +467,7 @@ Ptr<LetStmnt> Parser::parse_let_stmnt() {
     Ptr<Expr> init;
     if (accept(Tok::Tag::A_assign))
         init = parse_expr("initialization expression of a let statement");
-    expect(Tok::Tag::P_semicolon, "the end of an let statement");
+    expect(Tok::Tag::P_semicolon, "the end of a let statement");
     return mk_ptr<LetStmnt>(track, std::move(ptrn), std::move(init));
 }
 
