@@ -117,7 +117,7 @@ constexpr auto Num_Keys  = size_t(0) DIMPL_KEY(CODE);
     m(O_sub,        "-",   Add,     "sub") \
     m(O_mul,        "*",   Mul,     "mul") \
     m(O_div,        "/",   Mul,     "div") \
-    m(O_rem,        "%",   Mul,     "rem") \
+    m(O_rem,        "%",   Mul,     "mod") \
     m(O_tilde,      "~",   Error,   "") \
     m(O_shl,        "<<",  Shift,   "shl") \
     m(O_shr,        ">>",  Shift,   "shr") \

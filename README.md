@@ -71,6 +71,25 @@ s = n                                                   (* nominal statement *)
 
 ### Infix Expressions
 
+| Assignment     | Desugared           |
+| -------------- | ------------------- |
+| `e1  + e2;`    | `   add(e1, e2)`    |
+| `e1  - e2;`    | `   sub(e1, e2)`    |
+| `e1  * e2;`    | `   mul(e1, e2)`    |
+| `e1  / e2;`    | `   div(e1, e2)`    |
+| `e1  % e2;`    | `   mod(e1, e2)`    |
+| `e1 >> e2;`    | `   shr(e1, e2)`    |
+| `e1 << e2;`    | `   shl(e1, e2)`    |
+| `e1 \| e2;`    | `bitor (e1, e2)`    |
+| `e1  & e2;`    | `bitand(e1, e2)`    |
+| `e1  ^ e2;`    | `bitxor(e1, e2)`    |
+| `e1 == e2;`    | `    eq(e1, e2)`    |
+| `e1 != e2;`    | `    ne(e1, e2)`    |
+| `e1 <  e2;`    | `    lt(e1, e2)`    |
+| `e1 <= e2;`    | `    le(e1, e2)`    |
+| `e1 >  e2;`    | `    gt(e1, e2)`    |
+| `e1 >= e2;`    | `    ge(e1, e2)`    |
+
 ### Postfix Expressions
 
 ## Statements
