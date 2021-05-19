@@ -280,15 +280,17 @@ Ptr<Expr> Parser::parse_primary_expr(const char* ctxt) {
         case Tok::Tag::B_lam:
         case Tok::Tag::K_cn:
         case Tok::Tag::K_fn:        return parse_abs_expr();
+        case Tok::Tag::D_angle_l:
+        case Tok::Tag::K_pk:        return parse_pk_expr();
+        case Tok::Tag::D_quote_l:
+        case Tok::Tag::K_ar:        return parse_ar_expr();
         case Tok::Tag::D_brace_l:   return parse_block_expr(nullptr);
         case Tok::Tag::D_bracket_l: return parse_sigma_expr();
         case Tok::Tag::D_paren_l:   return parse_tup_expr();
-        case Tok::Tag::K_ar:        return parse_ar_expr();
         case Tok::Tag::K_false:     return nullptr; // TODO
         case Tok::Tag::K_for:       return parse_for_expr();
         case Tok::Tag::K_if:        return parse_if_expr();
         case Tok::Tag::K_match:     return parse_match_expr();
-        case Tok::Tag::K_pk:        return parse_pk_expr();
         case Tok::Tag::K_true:      return nullptr; // TODO
         case Tok::Tag::K_while:     return parse_while_expr();
         case Tok::Tag::L_f:         return nullptr; // TODO
@@ -390,12 +392,20 @@ Ptr<MatchExpr> Parser::parse_match_expr() {
 
 Ptr<PkExpr> Parser::parse_pk_expr() {
     auto track = tracker();
-    eat(Tok::Tag::K_pk);
-    expect(Tok::Tag::D_paren_l, "opening delimiter of a pack");
+    bool angle = accept(Tok::Tag::D_angle_l);
+    if (!angle) {
+        eat(Tok::Tag::K_pk);
+        expect(Tok::Tag::D_paren_l, "opening delimiter of a pack");
+    }
+
     auto doms = parse_list(Tok::Tag::P_semicolon, [&]{ return parse_ptrn_t("type ascription of a pack's domain"); });
     expect(Tok::Tag::P_semicolon, "pack");
     auto body = parse_expr("body of a pack");
-    expect(Tok::Tag::D_paren_r, "closing delimiter of a pack");
+
+    if (angle)
+        expect(Tok::Tag::D_angle_r, "closing delimiter of an angle-style pack");
+    else
+        expect(Tok::Tag::D_paren_r, "closing delimiter of a pack");
 
     return mk_ptr<PkExpr>(track, std::move(doms), std::move(body));
 }
@@ -442,12 +452,20 @@ Ptr<TupExpr> Parser::parse_tup_expr(Tok::Tag delim_l) {
 
 Ptr<ArExpr> Parser::parse_ar_expr() {
     auto track = tracker();
-    eat(Tok::Tag::K_ar);
-    expect(Tok::Tag::D_bracket_l, "opening delimiter of an array");
+    bool quote = accept(Tok::Tag::D_quote_l);
+    if (!quote) {
+        eat(Tok::Tag::K_ar);
+        expect(Tok::Tag::D_bracket_l, "opening delimiter of an array");
+    }
+
     auto doms = parse_list(Tok::Tag::P_semicolon, [&]{ return parse_ptrn_t("type ascription of an array's domain"); });
     expect(Tok::Tag::P_semicolon, "array");
     auto body = parse_expr("body of an array");
-    expect(Tok::Tag::D_bracket_r, "closing delimiter of an array");
+
+    if (quote)
+        expect(Tok::Tag::D_quote_r, "closing delimiter of a quote-style array");
+    else
+        expect(Tok::Tag::D_bracket_r, "closing delimiter of an array");
 
     return mk_ptr<ArExpr>(track, std::move(doms), std::move(body));
 }
