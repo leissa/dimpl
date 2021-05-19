@@ -87,17 +87,17 @@ The assignment `e_l = e_r` assigns the r-value of `e_r` to the l-value of `e_l`.
 All other assignments are syntactic sugar.
 The following tables sums up all possibilities:
 
-| Assignment    | Desugared          |
-| ------------- | ------------------ |
-| `e_l  += e_r` | `e_l = e_l  + e_r` |
-| `e_l  -= e_r` | `e_l = e_l  - e_r` |
-| `e_l  *= e_r` | `e_l = e_l  * e_r` |
-| `e_l  /= e_r` | `e_l = e_l  / e_r` |
-| `e_l  %= e_r` | `e_l = e_l  % e_r` |
-| `e_l >>= e_r` | `e_l = e_l >> e_r` |
-| `e_l <<= e_r` | `e_l = e_l << e_r` |
-| `e_l \|= e_r` | `e_l = e_l \| e_r` |
-| `e_l  &= e_r` | `e_l = e_l  & e_r` |
-| `e_l  ^= e_r` | `e_l = e_l  ^ e_r` |
+| Assignment     | Desugared           |
+| -------------- | ------------------- |
+| `e_l  += e_r;` | `e_l = e_l  + e_r;` |
+| `e_l  -= e_r;` | `e_l = e_l  - e_r;` |
+| `e_l  *= e_r;` | `e_l = e_l  * e_r;` |
+| `e_l  /= e_r;` | `e_l = e_l  / e_r;` |
+| `e_l  %= e_r;` | `e_l = e_l  % e_r;` |
+| `e_l >>= e_r;` | `e_l = e_l >> e_r;` |
+| `e_l <<= e_r;` | `e_l = e_l << e_r;` |
+| `e_l \|= e_r;` | `e_l = e_l \| e_r;` |
+| `e_l  &= e_r;` | `e_l = e_l  & e_r;` |
+| `e_l  ^= e_r;` | `e_l = e_l  ^ e_r;` |
 
 ### Expression Statement
