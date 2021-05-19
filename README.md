@@ -54,17 +54,19 @@ e = ID
   | B                                                   (* block *)
   ;
 
-A = "[" p "," ... "," p "]" | (*nothing*);              (* optional inline abstraction *)
+A = "[" p "," ... "," p "]" | (*nothing*)               (* optional inline abstraction *)
+  ;
+B = "{" s ... s [ e ] "}"                               (* block expression *)
+  ;
 
-B = "{" s ... s [ e ] "}";                              (* block expression *)
-
-(* statement *)
+(* statements *)
 s = n                                                   (* nominal statement *)
   | "let" p "=" e ";"                                   (* let statement *)
   | e OP e ";"                                          (* assignment statement *)
   | e ";"                                               (* expression statement *)
-
+  ;
 ```
+
 ## Expressions
 
 ### Prefix Expressions
