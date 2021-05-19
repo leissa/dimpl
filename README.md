@@ -30,6 +30,9 @@ n = "nom" ID ":" e "=" e                                (* nom *)
 
 (* expressions *)
 e = ID
+  | OP e                                                (* prefix expression *)
+  | e OP e                                              (*  infix expression *)
+  | e OP                                                (* postix expression *)
   | "[" pt "," ... "," pt "]"                           (* sigma *)
   | "(" [ID "="] e "," ... "," [ID "="] e")" [":" e]    (* tuple *)
   | e "." ID                                            (* field  *)
@@ -56,8 +59,45 @@ A = "[" p "," ... "," p "]" | (*nothing*);              (* optional inline abstr
 B = "{" s ... s [ e ] "}";                              (* block expression *)
 
 (* statement *)
-s = e ";"                                               (* expression statement *)
+s = n                                                   (* nominal statement *)
   | "let" p "=" e ";"                                   (* let statement *)
-  | i                                                   (* item statement *)
+  | e OP e ";"                                          (* assignment statement *)
+  | e ";"                                               (* expression statement *)
 
 ```
+## Expressions
+
+### Prefix Expressions
+
+### Infix Expressions
+
+### Postfix Expressions
+
+## Statements
+
+### Nominal Statement
+
+### Let Statement
+
+### Assignment Statement
+
+Unlike many other languages, assignments are not expressions but statements.
+
+The assignment `e_l = e_r` assigns the r-value of `e_r` to the l-value of `e_l`.
+All other assignments are syntactic sugar.
+The following tables sums up all possibilities:
+
+| Assignment    | Desugared          |
+| ------------- | ------------------ |
+| `e_l  += e_r` | `e_l = e_l  + e_r` |
+| `e_l  -= e_r` | `e_l = e_l  - e_r` |
+| `e_l  *= e_r` | `e_l = e_l  * e_r` |
+| `e_l  /= e_r` | `e_l = e_l  / e_r` |
+| `e_l  %= e_r` | `e_l = e_l  % e_r` |
+| `e_l >>= e_r` | `e_l = e_l >> e_r` |
+| `e_l <<= e_r` | `e_l = e_l << e_r` |
+| `e_l  |= e_r` | `e_l = e_l  | e_r` |
+| `e_l  &= e_r` | `e_l = e_l  & e_r` |
+| `e_l  ^= e_r` | `e_l = e_l  ^ e_r` |
+
+### Expression Statement
