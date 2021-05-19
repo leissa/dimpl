@@ -14,9 +14,12 @@ make
 ## Syntax
 
 ```ebnf
-p = _p [":" e];                                         (* pattern with optional type *)
+(* patterns *)
+p  = _p [":" e];                                        (* pattern with optional type *)
 pt = _p ":" e | e;                                      (* pattern with mandatory type *)
-_p = ID | tp;                                           (* pattern base *)
+_p = ID                                                 (* id pattern *)
+   | tp                                                 (* tuple pattern *)
+   ;
 tp = "(" p "," ... "," p ")";                           (* tuple pattern *)
 
 (* nominals *)
@@ -56,10 +59,8 @@ e = ID
   | B                                                   (* block *)
   ;
 
-A = "[" p "," ... "," p "]" | (*nothing*)               (* optional inline abstraction *)
-  ;
-B = "{" s ... s [ e ] "}"                               (* block expression *)
-  ;
+A = "[" p "," ... "," p "]" | (* nothing *);            (* optional inline abstraction *)
+B = "{" s ... s [ e ] "}";                              (* block expression *)
 
 (* statements *)
 s = n                                                   (* nominal statement *)

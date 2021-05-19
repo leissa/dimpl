@@ -54,14 +54,14 @@ public:
      * Otherwise, it is mandatory resulting in the given error message if not present.
      */
     ///other
-    Ptr<Ptrn>       parse_ptrn(const char* ctxt, const char* ascr_ctxt = nullptr);
+    Ptr<Ptrn>    parse_ptrn(const char* ctxt, const char* ascr_ctxt = nullptr);
     /// May also be an @p Expr which is intererpreted as an @p IdPtrn with an anonymous @p Id.
     /// If @p ascr_ctxt is not a @c nullptr the type ascr is mandatory.
     /// Otherwise, it's optional.
-    Ptr<Ptrn>    parse_ptrn_t  (const char* ascr_ctxt = nullptr);
-    Ptr<IdPtrn>  parse_id_ptrn( const char* ascr_ctxt = nullptr);
+    Ptr<Ptrn>    parse_ptrn_t(const char* ascr_ctxt = nullptr);
+    Ptr<IdPtrn>  parse_id_ptrn(const char* ascr_ctxt = nullptr);
     Ptr<TupPtrn> parse_tup_ptrn(const char* ctxt, const char* ascr_ctxt = nullptr,
-                                 Tok::Tag delim_l = Tok::Tag::D_paren_l);
+                                Tok::Tag delim_l = Tok::Tag::D_paren_l);
     //@}
 
     /// @name Expr%s
