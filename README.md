@@ -96,7 +96,7 @@ The following tables sums up all possibilities:
 | `e_l  %= e_r` | `e_l = e_l  % e_r` |
 | `e_l >>= e_r` | `e_l = e_l >> e_r` |
 | `e_l <<= e_r` | `e_l = e_l << e_r` |
-| `e_l  |= e_r` | `e_l = e_l  | e_r` |
+| `e_l \|= e_r` | `e_l = e_l \| e_r` |
 | `e_l  &= e_r` | `e_l = e_l  & e_r` |
 | `e_l  ^= e_r` | `e_l = e_l  ^ e_r` |
 
