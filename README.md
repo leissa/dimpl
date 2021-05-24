@@ -6,9 +6,8 @@
 git clone --recurse-submodules git@github.com:leissa/dimpl.git
 cd dimpl
 mkdir build
-cd build
-cmake ..
-make
+cmake -S . -B build
+cmake --build build -j $(nproc)
 ```
 
 ## Syntax
