@@ -58,8 +58,13 @@ static std::optional<std::pair<const Ptrn*, const Ptrn*>> dissect_ptrn(const Ptr
  * misc
  */
 
-Stream& Prg::stream(Stream& s) const { return s.fmt("{\n}", stmnts); }
+Stream& Prg::stream(Stream& s) const { return s.fmt("{\n}", stmts); }
 Stream& Id ::stream(Stream& s) const { return s.fmt("{}", sym); }
+
+Stream& Binder::stream(Stream& s) const {
+    if (comp.fancy && id->is_anonymous()) return s.fmt("{}", type);
+    return s.fmt("{}: {}", id, type);
+}
 
 /*
  * nom
@@ -86,25 +91,13 @@ Stream& AbsNom::stream(Stream& s) const {
  * Ptrn
  */
 
-Stream& Ptrn::stream(Stream& s) const {
-#if 0
-    return isa<UnknownExpr>(type) ? s : s.fmt(": {}", type);
-#endif
-    return s.fmt(": {}", type);
-}
-
 Stream& IdPtrn::stream(Stream& s) const {
-    if (type_mandatory && comp.is_anonymous(id->sym))
-        return s.fmt("{}", type);
+    if (comp.fancy && comp.is_anonymous(id->sym)) return s.fmt("{}", type);
     return s.fmt("{}: {}", id, type);
-#if 0
-    return stream_ascription(p);
-#endif
 }
 
 Stream& TupPtrn::stream(Stream& s) const {
     return s.fmt("({, })", elems);
-    //return stream_ascription(p);
 }
 
 Stream& ErrorPtrn::stream(Stream& s) const {
@@ -120,6 +113,7 @@ Stream& ArExpr     ::stream(Stream& s) const { return s.fmt("«{, }; {}»", doms
 Stream& BottomExpr ::stream(Stream& s) const { return s.fmt("⊥"); }
 Stream& ErrorExpr  ::stream(Stream& s) const { return s.fmt("<error expression>"); }
 Stream& FieldExpr  ::stream(Stream& s) const { return s.fmt("{}.{}", lhs, id); }
+Stream& ForExpr    ::stream(Stream& s) const { return s.fmt("for {} in {}", ptrn, body); }
 Stream& IdExpr     ::stream(Stream& s) const { return s.fmt("{}", id); }
 Stream& IfExpr     ::stream(Stream& s) const { return s.fmt("if {} {} else {}", cond, then_expr, else_expr); }
 Stream& InfixExpr  ::stream(Stream& s) const { return s.fmt("({} {} {})", lhs, Tok::tag2str(tag), rhs); }
@@ -137,12 +131,13 @@ Stream& AppExpr::stream(Stream& s) const {
 
 Stream& BlockExpr::stream(Stream& s) const {
     s.fmt("{{\t\n");
-    s.fmt("{\n}", stmnts);
-    if (!stmnts.empty()) s.endl();
+    s.fmt("{\n}", stmts);
+    if (!stmts.empty()) s.endl();
     s.fmt("{}\b\n", expr);
     s.fmt("}}");
     return s;
 }
+
 
 Stream& PiExpr::stream(Stream& s) const {
 #if 0
@@ -173,14 +168,14 @@ Stream& TupExpr::stream(Stream& s) const {
 }
 
 /*
- * Stmnt
+ * Stmt
  */
 
-Stream& ExprStmnt:: stream(Stream& s) const { return s.fmt("{};", expr); }
+Stream& ExprStmt  ::stream(Stream& s) const { return s.fmt("{};", expr); }
 Stream& AssignStmt::stream(Stream& s) const { return s.fmt("{} {} {};", lhs, Tok::tag2str(tag), rhs); }
-Stream& NomStmnt  ::stream(Stream& s) const { return s.fmt("{}\n", nom); }
+Stream& NomStmt   ::stream(Stream& s) const { return s.fmt("{}\n", nom); }
 
-Stream& LetStmnt::stream(Stream& s) const {
+Stream& LetStmt::stream(Stream& s) const {
     if (init)
         return s.fmt("let {} = {};", ptrn, init);
     else

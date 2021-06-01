@@ -60,6 +60,7 @@ using SymSet = thorin::HashSet<Sym, SymHash>;
     m(K_fn,        "fn")        \
     m(K_for,       "for")       \
     m(K_if,        "if")        \
+    m(K_in,        "in")        \
     m(K_impl,      "impl")      \
     m(K_kind,      "kind")      \
     m(K_let,       "let")       \

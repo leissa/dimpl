@@ -163,8 +163,9 @@ int main(int argc, char** argv) {
         prg->bind(scopes);
 
         if (comp.emit_ast) {
-            Stream s;
-            prg->stream(s);
+            //Stream s;
+            //prg->stream(s);
+            prg->dump();
         }
 
 #if 0

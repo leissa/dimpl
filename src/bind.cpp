@@ -9,11 +9,13 @@ namespace dimpl {
  */
 
 const Id* Decl::id() const {
+    if (auto binder  = std::get_if<const Binder*>(&node_)) return (*binder )->id.get();
     if (auto id_ptrn = std::get_if<const IdPtrn*>(&node_)) return (*id_ptrn)->id.get();
     return std::get<const Nom*>(node_)->id.get();
 }
 
 const thorin::Def* Decl::def() const {
+    if (auto binder  = std::get_if<const Binder*>(&node_)) return (*binder )->def();
     if (auto id_ptrn = std::get_if<const IdPtrn*>(&node_)) return (*id_ptrn)->def();
     return std::get<const Nom*>(node_)->def();
 }
@@ -45,13 +47,13 @@ void Scopes::insert(Decl decl) {
     }
 }
 
-void Scopes::bind_stmnts(const Ptrs<Stmnt>& stmnts) {
-    for (auto i = stmnts.begin(), e = stmnts.end(); i != e;) {
-        if (isa<NomStmnt>(*i)) {
-            for (auto j = i; j != e && isa<NomStmnt>(*j); ++j)
-                insert(as<NomStmnt>(*j)->nom.get());
-            for (; i != e && isa<NomStmnt>(*i); ++i)
-                as<NomStmnt>(*i)->nom->bind(*this);
+void Scopes::bind_stmts(const Ptrs<Stmt>& stmts) {
+    for (auto i = stmts.begin(), e = stmts.end(); i != e;) {
+        if (isa<NomStmt>(*i)) {
+            for (auto j = i; j != e && isa<NomStmt>(*j); ++j)
+                insert(as<NomStmt>(*j)->nom.get());
+            for (; i != e && isa<NomStmt>(*i); ++i)
+                as<NomStmt>(*i)->nom->bind(*this);
         } else {
             (*i)->bind(*this);
             ++i;
@@ -67,8 +69,13 @@ void Scopes::bind_stmnts(const Ptrs<Stmnt>& stmnts) {
 
 void Prg::bind(Scopes& s) const {
     s.push();
-    s.bind_stmnts(stmnts);
+    s.bind_stmts(stmts);
     s.pop();
+}
+
+void Binder::bind(Scopes& s) const {
+    s.insert(this);
+    type->bind(s);
 }
 
 /*
@@ -102,9 +109,7 @@ void IdPtrn::bind(Scopes& s) const {
 }
 
 void TupPtrn::bind(Scopes& s) const {
-    for (auto&& elem : elems)
-        elem->bind(s);
-    type->bind(s);
+    for (auto&& elem : elems) elem->bind(s);
 }
 
 void ErrorPtrn::bind(Scopes&) const {}
@@ -129,7 +134,7 @@ void AppExpr::bind(Scopes& s) const {
 
 void BlockExpr::bind(Scopes& s) const {
     s.push();
-    s.bind_stmnts(stmnts);
+    s.bind_stmts(stmts);
     expr->bind(s);
     s.pop();
 }
@@ -137,6 +142,11 @@ void BlockExpr::bind(Scopes& s) const {
 void PiExpr::bind(Scopes& s) const {
     dom->bind(s);
     codom->bind(s);
+}
+
+void ForExpr::bind(Scopes& s) const {
+    ptrn->bind(s);
+    body->bind(s);
 }
 
 void IdExpr::bind(Scopes& s) const {
@@ -185,7 +195,7 @@ void ArExpr::bind(Scopes& s) const {
 }
 
 /*
- * Stmnt
+ * Stmt
  */
 
 void AssignStmt::bind(Scopes& s) const {
@@ -193,17 +203,17 @@ void AssignStmt::bind(Scopes& s) const {
     rhs->bind(s);
 }
 
-void ExprStmnt::bind(Scopes& s) const {
+void ExprStmt::bind(Scopes& s) const {
     expr->bind(s);
 }
 
-void LetStmnt::bind(Scopes& s) const {
+void LetStmt::bind(Scopes& s) const {
     if (init)
         init->bind(s);
     ptrn->bind(s);
 }
 
-void NomStmnt::bind(Scopes& s) const {
+void NomStmt::bind(Scopes& s) const {
     nom->bind(s);
 }
 

@@ -15,64 +15,77 @@ make
 
 ```ebnf
 (* patterns *)
-p  = _p [":" e];                                        (* pattern with optional type *)
-pt = _p ":" e | e;                                      (* pattern with mandatory type *)
-_p = ID                                                 (* id pattern *)
-   | tp                                                 (* tuple pattern *)
-   ;
-tp = "(" p "," ... "," p ")";                           (* tuple pattern *)
+p = ID [":" e]                                          (* id pattern *)
+  | T                                                   (* tuple pattern *)
+  ;
+
+T = "(" p "," ... "," p ")";                            (* tuple pattern *)
+A = "[" p "," ... "," p "]" | (* nothing *);            (* optional inline abstraction *)
+b = [ID ":"] e;                                         (* binder *)
+B = "{" s ... s [ e ] "}";                              (* block expression *)
 
 (* nominals *)
 n = "nom" ID ":" e "=" e                                (* nom *)
   | "struct" ID A "=" e                                 (* struct *)
   | "trait"  ID A "=" e                                 (* trait *)
-  | "\"  ID A tp ["->" e] e                             (* fn nom *)
-  | "fn" ID A tp ["->" e] e                             (* fn nom *)
-  | "cn" ID A tp          e                             (* cn nom *)
+  | "\"  ID A T ["->" e] e                              (* fn nom *)
+  | "fn" ID A T ["->" e] e                              (* fn nom *)
+  | "cn" ID A T          e                              (* cn nom *)
   ;
 
 (* expressions *)
 e = ID
-  | OP e                                                (* prefix expression *)
-  | e OP e                                              (*  infix expression *)
-  | e OP                                                (* postix expression *)
-  | "[" pt "," ... "," pt "]"                           (* sigma *)
+  | PRE_OP e                                            (* prefix expression *)
+  | e IN_OP e                                           (*  infix expression *)
+  | e POST_OP                                           (* postix expression *)
+  | "[" b "," ... "," b "]"                             (* sigma *)
   | "(" [ID "="] e "," ... "," [ID "="] e")" [":" e]    (* tuple *)
   | e "." ID                                            (* field  *)
   | "ar" "[" pt "," ... "," pt ";" e "]"                (* array *)
   |      "«" pt "," ... "," pt ";" e "»"                (* array (quote-style) *)
   | "pk" "(" pt "," ... "," pt ";" e ")"                (* pack *)
   |      "‹" pt "," ... "," pt ";" e "›"                (* pack (angle-style) *)
-  | "\/" pt "->" e                                      (* forall *)
-  | "Fn" pt "->" e                                      (* Fn *)
-  | "Cn" pt                                             (* Cn *)
-  | "\"  A tp ["->" e] e                                (* ds abstraction *)
-  | "fn" A tp ["->" e] e                                (* fn abstraction *)
-  | "cn" A tp          e                                (* cn abstraction *)
+  | "\/" b "->" e                                       (* forall *)
+  | "Fn" b "->" e                                       (* Fn *)
+  | "Cn" b                                              (* Cn *)
+  | "\"  A T ["->" e] e                                 (* ds abstraction *)
+  | "fn" A T ["->" e] e                                 (* fn abstraction *)
+  | "cn" A T          e                                 (* cn abstraction *)
   | e  "[" e "]"                                        (* ds application *)
   | e "!(" e ")"                                        (* cn application *)
   | e  "(" e ")"                                        (* fn application *)
   | "if" e B ["else" B]                                 (* if *)
   | "match" e "{" p "=>" e "," ... "," p "=>" e "}"     (* match *)
   | "while" e B                                         (* while *)
-  | "for" p "in" e                                      (* for *)
+  | "for" p "in" B                                      (* for *)
   | B                                                   (* block *)
   ;
-
-A = "[" p "," ... "," p "]" | (* nothing *);            (* optional inline abstraction *)
-B = "{" s ... s [ e ] "}";                              (* block expression *)
 
 (* statements *)
 s = n                                                   (* nominal statement *)
   | "let" p "=" e ";"                                   (* let statement *)
-  | e OP e ";"                                          (* assignment statement *)
+  | e A_OP e ";"                                        (* assignment statement *)
   | e ";"                                               (* expression statement *)
   ;
 ```
 
 ## Expressions
 
+Precedence is dissolved as follows from strongest to lowest:
+* Postfix operators (left-to-right)
+* Prefix operators
+* Infix operators (see below for complete table)
+
 ### Prefix Expressions
+
+| Expression  | Desugared           |
+| ----------  | ------------------- |
+| `+e`       | todo    |
+| `-e`       | todo    |
+| `*e`       | todo    |
+| `&e`       | todo    |
+| `++e`       | todo    |
+| `--e`       | todo    |
 
 ### Infix Expressions
 

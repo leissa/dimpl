@@ -8,15 +8,19 @@
 
 namespace dimpl {
 
+struct Binder;
 struct Id;
 struct IdPtrn;
 struct Nom;
-struct Stmnt;
+struct Stmt;
 
 //------------------------------------------------------------------------------
 
 struct Decl {
     Decl() {}
+    Decl(const Binder* binder)
+        : node_(binder)
+    {}
     Decl(const IdPtrn* id_ptrn)
         : node_(id_ptrn)
     {}
@@ -29,7 +33,7 @@ struct Decl {
     const thorin::Def* def() const;
 
 private:
-    std::variant<const IdPtrn*, const Nom*> node_;
+    std::variant<const Binder*, const IdPtrn*, const Nom*> node_;
 };
 
 //------------------------------------------------------------------------------
@@ -46,7 +50,7 @@ public:
     void pop()  { scopes_.pop_back(); }
     void insert(Decl);
     std::optional<Decl> find(Sym sym);
-    void bind_stmnts(const Ptrs<Stmnt>&);
+    void bind_stmts(const Ptrs<Stmt>&);
 
 private:
     Comp& comp_;

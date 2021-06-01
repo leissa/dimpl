@@ -33,9 +33,10 @@ public:
 
     /// @name misc
     //@{
-    Ptr<Prg>  parse_prg();
-    Ptr<Id>   parse_id(const char* ctxt = nullptr);
-    Ptr<Expr> parse_type_ascr(const char* ascr_ctxt = nullptr);
+    Ptr<Prg>    parse_prg();
+    Ptr<Id>     parse_id(const char* ctxt = nullptr);
+    Ptr<Expr>   parse_type_ascr(const char* ascr_ctxt = nullptr);
+    Ptr<Binder> parse_binder();
     //@}
 
     /// @name nom
@@ -48,30 +49,23 @@ public:
 
     /// @name Ptrn%s
     //@{
-    /**
-     * @p ascr_ctxt
-     * If @c nullptr the type ascr @c :e is optional.
-     * Otherwise, it is mandatory resulting in the given error message if not present.
-     */
     ///other
-    Ptr<Ptrn>    parse_ptrn(const char* ctxt, const char* ascr_ctxt = nullptr);
-    /// May also be an @p Expr which is intererpreted as an @p IdPtrn with an anonymous @p Id.
-    /// If @p ascr_ctxt is not a @c nullptr the type ascr is mandatory.
-    /// Otherwise, it's optional.
-    Ptr<Ptrn>    parse_ptrn_t(const char* ascr_ctxt = nullptr);
-    Ptr<IdPtrn>  parse_id_ptrn(const char* ascr_ctxt = nullptr);
-    Ptr<TupPtrn> parse_tup_ptrn(const char* ctxt, const char* ascr_ctxt = nullptr,
-                                Tok::Tag delim_l = Tok::Tag::D_paren_l);
+    Ptr<Ptrn>    parse_ptrn(const char* ctxt);
+    Ptr<IdPtrn>  parse_id_ptrn();
+    Ptr<TupPtrn> parse_tup_ptrn(Tok::Tag delim_l = Tok::Tag::D_paren_l, const char* ctxt = nullptr);
+    //Ptr<TupPtrn> parse_tup_ptrn(Tok::Tag delim_l = Tok::Tag::D_paren_l, const char* ctxt = nullptr) {
+        //return parse_tup_ptrn(ctxt, delim_l);
+    //}
     //@}
 
     /// @name Expr%s
     //@{
-    Ptr<Expr>         parse_expr(const char* ctxt, Tok::Prec = Tok::Prec::Bottom);
-    Ptr<Expr>         parse_prefix_expr();
-    Ptr<Expr>         parse_infix_expr(Tracker, Ptr<Expr>&&);
-    Ptr<Expr>         parse_postfix_expr(Tracker, Ptr<Expr>&&);
-    Ptr<AppExpr>      parse_app_expr(Tracker, Ptr<Expr>&&);
-    Ptr<FieldExpr>    parse_field_expr(Tracker, Ptr<Expr>&&);
+    Ptr<Expr>      parse_expr(const char* ctxt = nullptr, Tok::Prec = Tok::Prec::Bottom);
+    Ptr<Expr>      parse_prefix_expr();
+    Ptr<Expr>      parse_infix_expr(Tracker, Ptr<Expr>&&);
+    Ptr<Expr>      parse_postfix_expr(Tracker, Ptr<Expr>&&);
+    Ptr<AppExpr>   parse_app_expr(Tracker, Ptr<Expr>&&);
+    Ptr<FieldExpr> parse_field_expr(Tracker, Ptr<Expr>&&);
     //@}
 
     /// @name primary Expr%s
@@ -79,7 +73,7 @@ public:
     Ptr<Expr>       parse_primary_expr(const char* ctxt);
     Ptr<AbsExpr>    parse_abs_expr();
     Ptr<ArExpr>     parse_ar_expr();
-    Ptr<BlockExpr>  parse_block_expr(const char* ctxt);
+    Ptr<BlockExpr>  parse_block_expr(const char* ctxt = nullptr);
     Ptr<BottomExpr> parse_bottom_expr();
     Ptr<ForExpr>    parse_for_expr();
     Ptr<IdExpr>     parse_id_expr();
@@ -92,17 +86,17 @@ public:
     Ptr<WhileExpr>  parse_while_expr();
     //@}
 
-    /// @name Stmnt%s
+    /// @name Stmt%s
     //@{
-    Ptr<LetStmnt>   parse_let_stmnt();
-    Ptr<NomStmnt>   parse_nom_stmnt();
+    Ptr<LetStmt>   parse_let_stmt();
+    Ptr<NomStmt>   parse_nom_stmt();
     //@}
 
 private:
     /// @name make AST nodes
     //@{
     Ptr<BottomExpr>   mk_bottom_expr()      { return mk_ptr<BottomExpr> (prev_); }
-    Ptr<BlockExpr>    mk_empty_block_expr() { return mk_ptr<BlockExpr>  (prev_, Ptrs<Stmnt>{}, mk_unit_tup()); }
+    Ptr<BlockExpr>    mk_empty_block_expr() { return mk_ptr<BlockExpr>  (prev_, Ptrs<Stmt>{}, mk_unit_tup()); }
     Ptr<ErrorExpr>    mk_error_expr()       { return mk_ptr<ErrorExpr>  (prev_); }
     Ptr<TupExpr>      mk_unit_tup()         { return mk_ptr<TupExpr>  (prev_, Ptrs<TupExpr::Elem>{}, mk_unknown_expr()); }
     Ptr<UnknownExpr>  mk_unknown_expr()     { return mk_ptr<UnknownExpr>(prev_); }
@@ -124,15 +118,15 @@ private:
     Ptr<Id>     mk_id(const char* s)  { return mk_ptr<Id>(prev_, comp().sym(s)); }
     Ptr<IdPtrn> mk_id_ptrn(const char* s, Ptr<Expr>&& type) {
         auto loc = type->loc;
-        return mk_ptr<IdPtrn>(loc, mk_id(s), std::move(type), true);
+        return mk_ptr<IdPtrn>(loc, mk_id(s), std::move(type));
     }
     Ptr<IdPtrn>       mk_id_ptrn(Ptr<Id>&& id) {
         auto loc = id->loc;
-        return mk_ptr<IdPtrn>(loc, std::move(id), mk_unknown_expr(), false);
+        return mk_ptr<IdPtrn>(loc, std::move(id), mk_unknown_expr());
     }
-    Ptr<PiExpr>   mk_cn_type(Ptr<Ptrn>&& domain) {
-        auto loc = domain->loc;
-        return mk_ptr<PiExpr>(loc, FTag::Cn, std::move(domain), mk_bottom_expr());
+    Ptr<PiExpr>   mk_cn_type(Ptr<Binder>&& dom) {
+        auto loc = dom->loc;
+        return mk_ptr<PiExpr>(loc, FTag::Cn, std::move(dom), mk_bottom_expr());
     }
     //@}
 
