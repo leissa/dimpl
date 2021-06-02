@@ -14,7 +14,7 @@ cmake --build build -j $(nproc)
 
 ```ebnf
 (* patterns *)
-p = ID [":" e]                                          (* id pattern *)
+p = ["mut"] ID [":" e]                                  (* id pattern *)
   | T                                                   (* tuple pattern *)
   ;
 

@@ -8,33 +8,8 @@
 
 namespace dimpl {
 
-struct Binder;
-struct Id;
-struct IdPtrn;
-struct Nom;
+struct Decl;
 struct Stmt;
-
-//------------------------------------------------------------------------------
-
-struct Decl {
-    Decl() {}
-    Decl(const Binder* binder)
-        : node_(binder)
-    {}
-    Decl(const IdPtrn* id_ptrn)
-        : node_(id_ptrn)
-    {}
-    Decl(const Nom* nom)
-        : node_(nom)
-    {}
-
-    const Id* id() const;
-    Sym sym() const;
-    const thorin::Def* def() const;
-
-private:
-    std::variant<const Binder*, const IdPtrn*, const Nom*> node_;
-};
 
 //------------------------------------------------------------------------------
 
@@ -48,13 +23,13 @@ public:
     Comp& comp() { return comp_; }
     void push() { scopes_.emplace_back(); }
     void pop()  { scopes_.pop_back(); }
-    void insert(Decl);
-    std::optional<Decl> find(Sym sym);
+    void insert(const Decl*);
+    std::optional<const Decl*> find(Sym);
     void bind_stmts(const Ptrs<Stmt>&);
 
 private:
     Comp& comp_;
-    std::vector<SymMap<Decl>> scopes_;
+    std::vector<SymMap<const Decl*>> scopes_;
 };
 
 //------------------------------------------------------------------------------

@@ -126,6 +126,18 @@ struct Id : public AST {
     static constexpr auto Node = Node::Id;
 };
 
+struct Decl {
+    Decl(Ptr<Id>&& id)
+        : id(std::move(id))
+    {}
+
+    bool is_anonymous() const { return id->is_anonymous(); }
+    Sym sym() const { return id->sym; }
+
+    Ptr<Id> id;
+    const thorin::Def* def;
+};
+
 struct Expr : public AST {
     Expr(Comp& comp, Loc loc, int node)
         : AST(comp, loc, node)
@@ -145,19 +157,15 @@ struct Ptrn : public AST {
     //const thorin::Def* emit(Emitter&) const;
 };
 
-struct Nom : public AST {
+struct Nom : public AST, public Decl {
     Nom(Comp& comp, Loc loc, int node, Ptr<Id>&& id)
         : AST(comp, loc, node)
-        , id(std::move(id))
+        , Decl(std::move(id))
     {}
 
-    bool is_anonymous() const { return id->is_anonymous(); }
-    const thorin::Def* def() const { return def_; }
     void bind_rec(Scopes&) const;
     virtual void bind(Scopes&) const = 0;
     //void emit(Emitter&) const;
-
-    Ptr<Id> id;
 
 private:
     const thorin::Def* def_ = nullptr;
@@ -177,10 +185,10 @@ struct Prg : public AST {
     static constexpr auto Node = Node::Prg;
 };
 
-struct Binder : public AST {
+struct Binder : public AST , public Decl {
     Binder(Comp& comp, Loc loc, Ptr<Id> id, Ptr<Expr> type)
         : AST(comp, loc, Node)
-        , id(std::move(id))
+        , Decl(std::move(id))
         , type(std::move(type))
     {}
 
@@ -189,7 +197,6 @@ struct Binder : public AST {
     const thorin::Def* def() const { return def_; }
     //void emit(Emitter&) const;
 
-    Ptr<Id> id;
     Ptr<Expr> type;
     const thorin::Def* def_;
     static constexpr auto Node = Node::Binder;
@@ -265,26 +272,19 @@ struct ErrorPtrn : public Ptrn {
     static constexpr auto Node = Node::ErrorPtrn;
 };
 
-struct IdPtrn : public Ptrn {
+struct IdPtrn : public Ptrn, public Decl {
     IdPtrn(Comp& comp, Loc loc, Ptr<Id>&& id, Ptr<Expr>&& type)
         : Ptrn(comp, loc, Node)
-        , id(std::move(id))
+        , Decl(std::move(id))
         , type(std::move(type))
     {}
-
-    Sym sym() const { return id->sym; }
-    const thorin::Def* def() const { return def_; }
-    bool is_anonymous() const { return id->is_anonymous(); }
 
     Stream& stream(Stream& s) const override;
     void bind(Scopes&) const override;
     //void emit(Emitter&, const thorin::Def*) const override;
 
-    Ptr<Id> id;
     Ptr<Expr> type;
 
-private:
-    mutable const thorin::Def* def_ = nullptr;
     static constexpr auto Node = Node::IdPtrn;
 };
 
@@ -528,7 +528,8 @@ struct IdExpr : public Expr {
     //const thorin::Def* emit(Emitter&) const override;
 
     Ptr<Id> id;
-    mutable Decl decl;
+    const Decl* decl;
+
     static constexpr auto Node = Node::IdExpr;
 };
 

@@ -5,45 +5,26 @@
 namespace dimpl {
 
 /*
- * Decl
- */
-
-const Id* Decl::id() const {
-    if (auto binder  = std::get_if<const Binder*>(&node_)) return (*binder )->id.get();
-    if (auto id_ptrn = std::get_if<const IdPtrn*>(&node_)) return (*id_ptrn)->id.get();
-    return std::get<const Nom*>(node_)->id.get();
-}
-
-const thorin::Def* Decl::def() const {
-    if (auto binder  = std::get_if<const Binder*>(&node_)) return (*binder )->def();
-    if (auto id_ptrn = std::get_if<const IdPtrn*>(&node_)) return (*id_ptrn)->def();
-    return std::get<const Nom*>(node_)->def();
-}
-
-Sym Decl::sym() const { return id()->sym; }
-
-/*
  * Scopes
  */
 
-std::optional<Decl> Scopes::find(Sym sym) {
+std::optional<const Decl*> Scopes::find(Sym sym) {
     for (auto i = scopes_.rbegin(); i != scopes_.rend(); ++i) {
         auto& scope = *i;
-        if (auto i = scope.find(sym); i != scope.end())
-            return i->second;
+        if (auto decl = scope.lookup(sym)) return decl;
     }
     return {};
 }
 
-void Scopes::insert(Decl decl) {
+void Scopes::insert(const Decl* decl) {
     assert(!scopes_.empty());
 
-    auto sym = decl.sym();
+    auto sym = decl->sym();
     if (comp().is_anonymous(sym)) return;
 
-    if (auto [i, succ] = scopes_.back().emplace(sym, decl); !succ) {
-        comp().err(decl.id()->loc, "redefinition of '{}'", sym);
-        comp().note(i->second.id()->loc, "previous declaration of '{}' was here", sym);
+    if (auto&& [i, succ] = scopes_.back().emplace(sym, decl); !succ) {
+        comp().err(decl->id->loc, "redefinition of '{}'", sym);
+        comp().note(i->second->id->loc, "previous declaration of '{}' was here", sym);
     }
 }
 
