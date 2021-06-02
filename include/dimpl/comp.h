@@ -66,6 +66,7 @@ using SymSet = thorin::HashSet<Sym, SymHash>;
     m(K_let,       "let")       \
     m(K_match,     "match")     \
     m(K_mut,       "mut")       \
+    m(K_nat,       "nat")       \
     m(K_nom,       "nom")       \
     m(K_pk,        "pk")        \
     m(K_struct,    "struct")    \

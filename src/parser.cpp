@@ -38,36 +38,37 @@ static FTag tag2ftag(Tok::Tag tag) {
                     case Tok::Tag::K_struct:    \
                     case Tok::Tag::K_trait
 
-#define Tok__Tag__Expr   Tok::Tag::D_angle_l:   \
+#define Tok__Tag__Expr   Tok::Tag::B_forall:    \
+                    case Tok::Tag::B_lam:       \
+                    case Tok::Tag::D_angle_l:   \
                     case Tok::Tag::D_bracket_l: \
                     case Tok::Tag::D_paren_l:   \
                     case Tok::Tag::D_quote_l:   \
-                    case Tok::Tag::B_forall:    \
-                    case Tok::Tag::B_lam:       \
-                    case Tok::Tag::K_ar:        \
-                    case Tok::Tag::K_pk:        \
-                    case Tok::Tag::K_cn:        \
                     case Tok::Tag::K_Cn:        \
                     case Tok::Tag::K_Fn:        \
+                    case Tok::Tag::K_ar:        \
+                    case Tok::Tag::K_cn:        \
+                    case Tok::Tag::K_false:     \
                     case Tok::Tag::K_fn:        \
                     case Tok::Tag::K_for:       \
                     case Tok::Tag::K_if:        \
-                    case Tok::Tag::K_while:     \
-                    case Tok::Tag::K_match:     \
-                    case Tok::Tag::K_false:     \
-                    case Tok::Tag::K_true:      \
                     case Tok::Tag::K_kind:      \
+                    case Tok::Tag::K_match:     \
+                    case Tok::Tag::K_nat:       \
+                    case Tok::Tag::K_pk:        \
+                    case Tok::Tag::K_true:      \
                     case Tok::Tag::K_type:      \
+                    case Tok::Tag::K_while:     \
+                    case Tok::Tag::L_f:         \
                     case Tok::Tag::L_s:         \
                     case Tok::Tag::L_u:         \
-                    case Tok::Tag::L_f:         \
                     case Tok::Tag::M_id:        \
-                    case Tok::Tag::O_inc:       \
-                    case Tok::Tag::O_dec:       \
                     case Tok::Tag::O_add:       \
-                    case Tok::Tag::O_sub:       \
+                    case Tok::Tag::O_and:       \
+                    case Tok::Tag::O_dec:       \
+                    case Tok::Tag::O_inc:       \
                     case Tok::Tag::O_mul:       \
-                    case Tok::Tag::O_and
+                    case Tok::Tag::O_sub
 
 Parser::Parser(Comp& comp, std::istream& stream, const char* file)
     : lexer_(comp, stream, file)
@@ -191,8 +192,8 @@ Ptr<AbsNom> Parser::parse_abs_nom() {
     auto track = tracker();
     auto tag = tag2ftag(lex().tag());
     auto id = ahead().isa(Tok::Tag::M_id) ? parse_id() : mk_id("_");
-    auto meta = ahead().isa(Tok::Tag::D_bracket_l) ? parse_tup_ptrn(Tok::Tag::D_bracket_l) : nullptr;
-    auto dom = parse_tup_ptrn(Tok::Tag::D_paren_l, "domain of a function");
+    auto meta = ahead().isa(Tok::Tag::D_bracket_l) ? parse_tup_ptrn(Tok::Tag::D_bracket_l, Tok::Tag::D_bracket_r) : nullptr;
+    auto dom = parse_tup_ptrn(Tok::Tag::D_paren_l, Tok::Tag::D_paren_r, "domain of a function");
     auto codom = accept(Tok::Tag::P_arrow) ? parse_expr("codomain of an function") : mk_unknown_expr();
     auto body = parse_expr("body of a function");
     return mk_ptr<AbsNom>(track, tag, std::move(id), std::move(meta), std::move(dom), std::move(codom), std::move(body));
@@ -210,7 +211,7 @@ Ptr<Ptrn> Parser::parse_ptrn(const char* ctxt) {
     switch (ahead().tag()) {
         case Tok::Tag::K_mut:
         case Tok::Tag::M_id:      return parse_id_ptrn();
-        case Tok::Tag::D_paren_l: return parse_tup_ptrn(); // don't pass ctxt as we've already checked for D_paren_l
+        case Tok::Tag::D_paren_l: return parse_tup_ptrn(Tok::Tag::D_paren_l, Tok::Tag::D_paren_r);
         default:
             assert(ctxt);
             err("pattern", ctxt);
@@ -228,14 +229,13 @@ Ptr<IdPtrn> Parser::parse_id_ptrn() {
     return mk_ptr<IdPtrn>(track, mut, std::move(id), std::move(type));
 }
 
-Ptr<TupPtrn> Parser::parse_tup_ptrn(Tok::Tag delim_l, const char* ctxt) {
+Ptr<TupPtrn> Parser::parse_tup_ptrn(Tok::Tag delim_l, Tok::Tag delim_r, const char* ctxt) {
     if (ctxt && !ahead().isa(delim_l)) {
         err("tuple pattern", ctxt);
         return mk_ptr<TupPtrn>(prev_, mk_ptrs<Ptrn>());
     }
 
     auto track = tracker();
-    auto delim_r = delim_l == Tok::Tag::D_bracket_l ? Tok::Tag::D_bracket_r : Tok::Tag::D_paren_r;
     auto ptrns = parse_list("closing delimiter of tuple pattern", delim_l, delim_r, [&]{ return parse_ptrn("sub-pattern of a tuple pattern"); });
     return mk_ptr<TupPtrn>(track, std::move(ptrns));
 }
@@ -303,6 +303,9 @@ Ptr<FieldExpr> Parser::parse_field_expr(Tracker track, Ptr<Expr>&& lhs) {
 
 Ptr<Expr> Parser::parse_primary_expr(const char* ctxt) {
     switch (ahead().tag()) {
+        case Tok::Tag::K_nat:
+        case Tok::Tag::K_true:
+        case Tok::Tag::K_false:
         case Tok::Tag::K_kind:
         case Tok::Tag::K_type:      return mk_ptr<KeyExpr>(lex());
         case Tok::Tag::O_add:
@@ -326,11 +329,9 @@ Ptr<Expr> Parser::parse_primary_expr(const char* ctxt) {
         case Tok::Tag::D_brace_l:   return parse_block_expr();
         case Tok::Tag::D_bracket_l: return parse_sigma_expr();
         case Tok::Tag::D_paren_l:   return parse_tup_expr();
-        case Tok::Tag::K_false:     return nullptr; // TODO
         case Tok::Tag::K_for:       return parse_for_expr();
         case Tok::Tag::K_if:        return parse_if_expr();
         case Tok::Tag::K_match:     return parse_match_expr();
-        case Tok::Tag::K_true:      return nullptr; // TODO
         case Tok::Tag::K_while:     return parse_while_expr();
         case Tok::Tag::L_f:         return nullptr; // TODO
         case Tok::Tag::L_s:         return nullptr; // TODO
@@ -357,6 +358,7 @@ Ptr<BlockExpr> Parser::parse_block_expr(const char* ctxt) {
     eat(Tok::Tag::D_brace_l);
     Ptrs<Stmt> stmts;
     Ptr<Expr> final_expr;
+
     while (true) {
         switch (ahead().tag()) {
             case Tok::Tag::P_semicolon: lex(); /* ignore semicolon */         continue;
@@ -372,17 +374,11 @@ Ptr<BlockExpr> Parser::parse_block_expr(const char* ctxt) {
             case Tok__Tag__Expr: {
                 auto expr_track = tracker();
                 Ptr<Expr> expr;
-                bool stmt_like = true;
                 switch (ahead().tag()) {
                     case Tok::Tag::K_cn:
                     case Tok::Tag::K_fn:
                     case Tok::Tag::B_lam:     stmts.emplace_back(parse_nom_stmt()); continue;
-                    case Tok::Tag::K_for:     expr = parse_for_expr();   break;
-                    case Tok::Tag::K_if:      expr = parse_if_expr();    break;
-                    case Tok::Tag::K_match:   expr = parse_match_expr(); break;
-                    case Tok::Tag::K_while:   expr = parse_while_expr(); break;
-                    case Tok::Tag::D_brace_l: expr = parse_block_expr(); break;
-                    default:                  expr = parse_expr(); stmt_like = false;
+                    default:                  expr = parse_expr();
                 }
 
                 switch (ahead().tag()) {
@@ -397,7 +393,7 @@ Ptr<BlockExpr> Parser::parse_block_expr(const char* ctxt) {
                         stmts.emplace_back(mk_ptr<ExprStmt>(expr_track, std::move(expr)));
                         continue;
                     default:
-                        if (stmt_like && !ahead().isa(Tok::Tag::D_brace_r)) {
+                        if (expr->is_stmt_like() && !ahead().isa(Tok::Tag::D_brace_r)) {
                             stmts.emplace_back(mk_ptr<ExprStmt>(expr_track, std::move(expr)));
                             continue;
                         }
@@ -432,11 +428,10 @@ Ptr<IfExpr> Parser::parse_if_expr() {
 
 Ptr<ForExpr> Parser::parse_for_expr() {
     auto track = tracker();
-    eat(Tok::Tag::K_for);
-    auto ptrn = parse_ptrn("pattern of a for-expression");
-    expect(Tok::Tag::K_in, "for-expression");
+    auto ptrn = parse_tup_ptrn(Tok::Tag::K_for, Tok::Tag::K_in, "pattern of a for-expression");
+    auto app = parse_expr("for-expression"); // TODO
     auto body = parse_block_expr("body of a for-expression");
-    return mk_ptr<ForExpr>(track, std::move(ptrn), std::move(body));
+    return mk_ptr<ForExpr>(track, std::move(ptrn), std::move(app), std::move(body));
 }
 
 Ptr<MatchExpr> Parser::parse_match_expr() {

@@ -10,6 +10,13 @@ namespace dimpl {
 
 class Comp;
 
+/**
+ * The Parser. It uses the following conventions:
+ * * Whenever invoking a @c parse_* method, the @em callee must ensure that parsing cannot fail.
+ * * The same holds if @c ctxt @c == @c nullptr in the case of a @c ctxt parameter.
+ * * However, if @c ctxt @c != @c nullptr the @em callee checks
+ *   whether the lookahaead is appropriate and yields an error using @c ctxt otherwise.
+ */
 class Parser {
 private:
     class Tracker {
@@ -52,10 +59,7 @@ public:
     ///other
     Ptr<Ptrn>    parse_ptrn(const char* ctxt);
     Ptr<IdPtrn>  parse_id_ptrn();
-    Ptr<TupPtrn> parse_tup_ptrn(Tok::Tag delim_l = Tok::Tag::D_paren_l, const char* ctxt = nullptr);
-    //Ptr<TupPtrn> parse_tup_ptrn(Tok::Tag delim_l = Tok::Tag::D_paren_l, const char* ctxt = nullptr) {
-        //return parse_tup_ptrn(ctxt, delim_l);
-    //}
+    Ptr<TupPtrn> parse_tup_ptrn(Tok::Tag delim_l, Tok::Tag delim_r, const char* ctxt = nullptr);
     //@}
 
     /// @name Expr%s
@@ -95,31 +99,19 @@ public:
 private:
     /// @name make AST nodes
     //@{
-    Ptr<BottomExpr>   mk_bottom_expr()      { return mk_ptr<BottomExpr> (prev_); }
     Ptr<BlockExpr>    mk_empty_block_expr() { return mk_ptr<BlockExpr>  (prev_, Ptrs<Stmt>{}, mk_unit_tup()); }
     Ptr<ErrorExpr>    mk_error_expr()       { return mk_ptr<ErrorExpr>  (prev_); }
     Ptr<TupExpr>      mk_unit_tup()         { return mk_ptr<TupExpr>  (prev_, Ptrs<TupExpr::Elem>{}, mk_unknown_expr()); }
     Ptr<UnknownExpr>  mk_unknown_expr()     { return mk_ptr<UnknownExpr>(prev_); }
 
     template<class T, class... Args>
-    Ptr<T> mk_ptr(Args&&... args) { return std::make_unique<const T>(comp(), std::forward<Args&&>(args)...); }
+    Ptr<T> mk_ptr(Args&&... args) { return std::make_unique<const T>(comp(), std::forward<Args>(args)...); }
 
     Ptr<TupExpr::Elem> mk_tup_elem(Ptr<Expr>&& expr) {
         auto loc = expr->loc;
         return mk_ptr<TupExpr::Elem>(loc, mk_ptr<Id>(comp().tok(loc)), std::move(expr));
     }
-#if 0
-    Ptr<TupExpr>    mk_tup(Ptr<Expr>&& lhs, Ptr<Expr>&& rhs) {
-        auto loc = lhs->loc + rhs->loc;
-        auto args = mk_ptrs<TupExpr::Elem>(mk_tup_elem(std::move(lhs)), mk_tup_elem(std::move(rhs)));
-        return mk_ptr<TupExpr>(loc, std::move(args), mk_unknown_expr());
-    }
-#endif
-    Ptr<Id>     mk_id(const char* s)  { return mk_ptr<Id>(prev_, comp().sym(s)); }
-    Ptr<PiExpr>   mk_cn_type(Ptr<Binder>&& dom) {
-        auto loc = dom->loc;
-        return mk_ptr<PiExpr>(loc, FTag::Cn, std::move(dom), mk_bottom_expr());
-    }
+    Ptr<Id> mk_id(const char* s)  { return mk_ptr<Id>(prev_, comp().sym(s)); }
     //@}
 
     const Tok& ahead(size_t i = 0) const { assert(i < max_ahead); return ahead_[i]; }

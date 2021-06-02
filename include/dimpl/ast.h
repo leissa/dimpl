@@ -143,6 +143,7 @@ struct Expr : public AST {
         : AST(comp, loc, node)
     {}
 
+    virtual bool is_stmt_like() const { return false; }
     virtual void bind(Scopes&) const = 0;
     //virtual const thorin::Def* emit(Emitter&) const = 0;
 };
@@ -453,6 +454,7 @@ struct BlockExpr : public Expr {
         , expr(std::move(expr))
     {}
 
+    bool is_stmt_like() const override { return true; }
     Stream& stream(Stream& s) const override;
     void bind(Scopes&) const override;
     //const thorin::Def* emit(Emitter&) const override;
@@ -503,17 +505,20 @@ struct FieldExpr : public Expr {
 };
 
 struct ForExpr : public Expr {
-    ForExpr(Comp& comp, Loc loc, Ptr<Ptrn>&& ptrn, Ptr<BlockExpr>&& body)
+    ForExpr(Comp& comp, Loc loc, Ptr<Ptrn>&& ptrn, Ptr<Expr>&& app, Ptr<BlockExpr>&& body)
         : Expr(comp, loc, Node)
         , ptrn(std::move(ptrn))
+        , app(std::move(app))
         , body(std::move(body))
     {}
 
+    bool is_stmt_like() const override { return true; }
     Stream& stream(Stream& s) const override;
     void bind(Scopes&) const override;
     //const thorin::Def* emit(Emitter&) const override;
 
     Ptr<Ptrn> ptrn;
+    Ptr<Expr> app;
     Ptr<BlockExpr> body;
 
     static constexpr auto Node = Node::ForExpr;
@@ -545,6 +550,7 @@ struct IfExpr : public Expr {
         , else_expr(std::move(else_expr))
     {}
 
+    bool is_stmt_like() const override { return true; }
     Stream& stream(Stream& s) const override;
     void bind(Scopes&) const override;
     //const thorin::Def* emit(Emitter&) const override;
@@ -574,6 +580,7 @@ struct InfixExpr : public Expr {
 };
 
 struct MatchExpr : public Expr {
+    bool is_stmt_like() const override { return true; }
     Stream& stream(Stream& s) const override;
     void bind(Scopes&) const override;
     //const thorin::Def* emit(Emitter&) const override;
@@ -702,6 +709,7 @@ struct UnknownExpr : public Expr {
 };
 
 struct WhileExpr : public Expr {
+    bool is_stmt_like() const override { return true; }
     static constexpr auto Node = Node::WhileExpr;
 };
 

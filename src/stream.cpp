@@ -104,7 +104,7 @@ Stream& ArExpr     ::stream(Stream& s) const { return s.fmt("«{, }; {}»", doms
 Stream& BottomExpr ::stream(Stream& s) const { return s.fmt("⊥"); }
 Stream& ErrorExpr  ::stream(Stream& s) const { return s.fmt("<error expression>"); }
 Stream& FieldExpr  ::stream(Stream& s) const { return s.fmt("{}.{}", lhs, id); }
-Stream& ForExpr    ::stream(Stream& s) const { return s.fmt("for {} in {}", ptrn, body); }
+Stream& ForExpr    ::stream(Stream& s) const { return s.fmt("for {} in {} {}", ptrn, app, body); }
 Stream& IdExpr     ::stream(Stream& s) const { return s.fmt("{}", id); }
 Stream& IfExpr     ::stream(Stream& s) const { return s.fmt("if {} {} else {}", cond, then_expr, else_expr); }
 Stream& InfixExpr  ::stream(Stream& s) const { return s.fmt("({} {} {})", lhs, Tok::tag2str(tag), rhs); }
