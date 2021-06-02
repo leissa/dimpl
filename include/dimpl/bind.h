@@ -1,9 +1,6 @@
 #ifndef DIMPL_BIND_H
 #define DIMPL_BIND_H
 
-#include <optional>
-#include <variant>
-
 #include "dimpl/comp.h"
 
 namespace dimpl {
@@ -24,7 +21,7 @@ public:
     void push() { scopes_.emplace_back(); }
     void pop()  { scopes_.pop_back(); }
     void insert(const Decl*);
-    std::optional<const Decl*> find(Sym);
+    const Decl* find(Sym);
     void bind_stmts(const Ptrs<Stmt>&);
 
 private:

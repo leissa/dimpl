@@ -8,12 +8,12 @@ namespace dimpl {
  * Scopes
  */
 
-std::optional<const Decl*> Scopes::find(Sym sym) {
+const Decl* Scopes::find(Sym sym) {
     for (auto i = scopes_.rbegin(); i != scopes_.rend(); ++i) {
         auto& scope = *i;
-        if (auto decl = scope.lookup(sym)) return decl;
+        if (auto decl = scope.lookup(sym)) return *decl;
     }
-    return {};
+    return nullptr;
 }
 
 void Scopes::insert(const Decl* decl) {
