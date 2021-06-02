@@ -116,14 +116,6 @@ private:
     }
 #endif
     Ptr<Id>     mk_id(const char* s)  { return mk_ptr<Id>(prev_, comp().sym(s)); }
-    Ptr<IdPtrn> mk_id_ptrn(const char* s, Ptr<Expr>&& type) {
-        auto loc = type->loc;
-        return mk_ptr<IdPtrn>(loc, mk_id(s), std::move(type));
-    }
-    Ptr<IdPtrn>       mk_id_ptrn(Ptr<Id>&& id) {
-        auto loc = id->loc;
-        return mk_ptr<IdPtrn>(loc, std::move(id), mk_unknown_expr());
-    }
     Ptr<PiExpr>   mk_cn_type(Ptr<Binder>&& dom) {
         auto loc = dom->loc;
         return mk_ptr<PiExpr>(loc, FTag::Cn, std::move(dom), mk_bottom_expr());

@@ -208,6 +208,7 @@ Ptr<SigNom> Parser::parse_sig_nom() {
 
 Ptr<Ptrn> Parser::parse_ptrn(const char* ctxt) {
     switch (ahead().tag()) {
+        case Tok::Tag::K_mut:
         case Tok::Tag::M_id:      return parse_id_ptrn();
         case Tok::Tag::D_paren_l: return parse_tup_ptrn(); // don't pass ctxt as we've already checked for D_paren_l
         default:
@@ -219,11 +220,12 @@ Ptr<Ptrn> Parser::parse_ptrn(const char* ctxt) {
 
 Ptr<IdPtrn> Parser::parse_id_ptrn() {
     auto track = tracker();
+    bool mut = accept(Tok::Tag::K_mut);
     auto id = parse_id();
     Ptr<Expr> type = accept(Tok::Tag::P_colon)
         ? parse_expr("type ascription of an identifier pattern")
         : mk_unknown_expr();
-    return mk_ptr<IdPtrn>(track, std::move(id), std::move(type));
+    return mk_ptr<IdPtrn>(track, mut, std::move(id), std::move(type));
 }
 
 Ptr<TupPtrn> Parser::parse_tup_ptrn(Tok::Tag delim_l, const char* ctxt) {

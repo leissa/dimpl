@@ -91,18 +91,9 @@ Stream& AbsNom::stream(Stream& s) const {
  * Ptrn
  */
 
-Stream& IdPtrn::stream(Stream& s) const {
-    if (comp.fancy && comp.is_anonymous(id->sym)) return s.fmt("{}", type);
-    return s.fmt("{}: {}", id, type);
-}
-
-Stream& TupPtrn::stream(Stream& s) const {
-    return s.fmt("({, })", elems);
-}
-
-Stream& ErrorPtrn::stream(Stream& s) const {
-    return s.fmt("<error pattern>");
-}
+Stream& IdPtrn   ::stream(Stream& s) const { return s.fmt("{}{}: {}", mut ? "mut " : "", id, type); }
+Stream& TupPtrn  ::stream(Stream& s) const { return s.fmt("({, })", elems); }
+Stream& ErrorPtrn::stream(Stream& s) const { return s.fmt("<error pattern>"); }
 
 /*
  * Expr

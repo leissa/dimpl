@@ -273,9 +273,10 @@ struct ErrorPtrn : public Ptrn {
 };
 
 struct IdPtrn : public Ptrn, public Decl {
-    IdPtrn(Comp& comp, Loc loc, Ptr<Id>&& id, Ptr<Expr>&& type)
+    IdPtrn(Comp& comp, Loc loc, bool mut, Ptr<Id>&& id, Ptr<Expr>&& type)
         : Ptrn(comp, loc, Node)
         , Decl(std::move(id))
+        , mut(mut)
         , type(std::move(type))
     {}
 
@@ -283,6 +284,7 @@ struct IdPtrn : public Ptrn, public Decl {
     void bind(Scopes&) const override;
     //void emit(Emitter&, const thorin::Def*) const override;
 
+    bool mut;
     Ptr<Expr> type;
 
     static constexpr auto Node = Node::IdPtrn;
@@ -457,6 +459,7 @@ struct BlockExpr : public Expr {
 
     Ptrs<Stmt> stmts;
     Ptr<Expr> expr;
+
     static constexpr auto Node = Node::BlockExpr;
 };
 
@@ -468,6 +471,7 @@ struct BottomExpr : public Expr {
     Stream& stream(Stream& s) const override;
     void bind(Scopes&) const override;
     //const thorin::Def* emit(Emitter&) const override;
+
     static constexpr auto Node = Node::BottomExpr;
 };
 
