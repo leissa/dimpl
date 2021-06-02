@@ -429,9 +429,9 @@ Ptr<IfExpr> Parser::parse_if_expr() {
 Ptr<ForExpr> Parser::parse_for_expr() {
     auto track = tracker();
     auto ptrn = parse_tup_ptrn(Tok::Tag::K_for, Tok::Tag::K_in, "pattern of a for-expression");
-    auto app = parse_expr("for-expression"); // TODO
+    auto expr = parse_expr("for-expression");
     auto body = parse_block_expr("body of a for-expression");
-    return mk_ptr<ForExpr>(track, std::move(ptrn), std::move(app), std::move(body));
+    return mk_ptr<ForExpr>(track, std::move(ptrn), std::move(expr), std::move(body));
 }
 
 Ptr<MatchExpr> Parser::parse_match_expr() {

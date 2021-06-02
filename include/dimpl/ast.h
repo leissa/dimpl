@@ -505,10 +505,10 @@ struct FieldExpr : public Expr {
 };
 
 struct ForExpr : public Expr {
-    ForExpr(Comp& comp, Loc loc, Ptr<Ptrn>&& ptrn, Ptr<Expr>&& app, Ptr<BlockExpr>&& body)
+    ForExpr(Comp& comp, Loc loc, Ptr<Ptrn>&& ptrn, Ptr<Expr>&& expr, Ptr<BlockExpr>&& body)
         : Expr(comp, loc, Node)
         , ptrn(std::move(ptrn))
-        , app(std::move(app))
+        , expr(std::move(expr))
         , body(std::move(body))
     {}
 
@@ -518,7 +518,7 @@ struct ForExpr : public Expr {
     //const thorin::Def* emit(Emitter&) const override;
 
     Ptr<Ptrn> ptrn;
-    Ptr<Expr> app;
+    Ptr<Expr> expr;
     Ptr<BlockExpr> body;
 
     static constexpr auto Node = Node::ForExpr;
