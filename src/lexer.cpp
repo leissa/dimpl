@@ -137,10 +137,11 @@ Tok Lexer::lex() {
         if (accept(U'›')) return comp().tok(loc_, Tok::Tag::D_angle_r);
 
         // punctation
-        if (accept('.')) return comp().tok(loc_, Tok::Tag::P_dot);
-        if (accept(',')) return comp().tok(loc_, Tok::Tag::P_comma);
-        if (accept(';')) return comp().tok(loc_, Tok::Tag::P_semicolon);
-        if (accept(':')) {
+        if (accept(U'→')) return comp().tok(loc_, Tok::Tag::P_arrow); // "->" below
+        if (accept( '.')) return comp().tok(loc_, Tok::Tag::P_dot);
+        if (accept( ',')) return comp().tok(loc_, Tok::Tag::P_comma);
+        if (accept( ';')) return comp().tok(loc_, Tok::Tag::P_semicolon);
+        if (accept( ':')) {
             if (accept(':')) return comp().tok(loc_, Tok::Tag::P_colon_colon);
             return comp().tok(loc_, Tok::Tag::P_colon);
         }
@@ -175,8 +176,6 @@ Tok Lexer::lex() {
             if (accept('+')) return comp().tok(loc_, Tok::Tag::O_inc);
             if (accept('=')) return comp().tok(loc_, Tok::Tag::A_add_assign);
             return comp().tok(loc_, Tok::Tag::O_add);
-        } else if (accept(U'→')) {
-            return comp().tok(loc_, Tok::Tag::P_arrow);
         } else if (accept('-')) {
             if (accept('>')) return comp().tok(loc_, Tok::Tag::P_arrow);
             if (accept('-')) return comp().tok(loc_, Tok::Tag::O_dec);
