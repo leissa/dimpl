@@ -175,6 +175,8 @@ Tok Lexer::lex() {
             if (accept('+')) return comp().tok(loc_, Tok::Tag::O_inc);
             if (accept('=')) return comp().tok(loc_, Tok::Tag::A_add_assign);
             return comp().tok(loc_, Tok::Tag::O_add);
+        } else if (accept(U'→')) {
+            return comp().tok(loc_, Tok::Tag::P_arrow);
         } else if (accept('-')) {
             if (accept('>')) return comp().tok(loc_, Tok::Tag::P_arrow);
             if (accept('-')) return comp().tok(loc_, Tok::Tag::O_dec);
