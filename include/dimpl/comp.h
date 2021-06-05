@@ -185,25 +185,25 @@ public:
     Tok(Loc loc, s64 s)
         : loc_(loc)
         , tag_(Tag::L_s)
-        , s64_(s)
+        , s_(s)
     {}
     Tok(Loc loc, u64 u)
         : loc_(loc)
         , tag_(Tag::L_u)
-        , u64_(u)
+        , u_(u)
     {}
     Tok(Loc loc, f64 f)
         : loc_(loc)
         , tag_(Tag::L_f)
-        , f64_(f)
+        , f_(f)
     {}
 
     Tag tag() const { return tag_; }
     Loc loc() const { return loc_; }
     Sym sym() const { return sym_; }
-    thorin::f64 f64() const { assert(tag() == Tag::L_f ); return f64_; }
-    thorin::s64 s64() const { assert(tag() == Tag::L_s ); return s64_; }
-    thorin::u64 u64() const { assert(tag() == Tag::L_u ); return u64_; }
+    thorin::f64 f() const { assert(tag() == Tag::L_f ); return f_; }
+    thorin::s64 s() const { assert(tag() == Tag::L_s ); return s_; }
+    thorin::u64 u() const { assert(tag() == Tag::L_u ); return u_; }
     bool isa(Tag tag) const { return tag_ == tag; }
     bool is_lit() const;
     Stream& stream(Stream&) const;
@@ -217,9 +217,9 @@ private:
     Tag tag_;
     union {
         Sym sym_;
-        thorin::f64 f64_;
-        thorin::s64 s64_;
-        thorin::u64 u64_;
+        thorin::f64 f_;
+        thorin::s64 s_;
+        thorin::u64 u_;
     };
 };
 

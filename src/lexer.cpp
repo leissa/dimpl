@@ -191,7 +191,7 @@ Tok Lexer::lex() {
                 while (!eof() && peek() != '\n') next();
                 continue;
             }
-            if (accept('='))  return comp().tok(loc_, Tok::Tag::A_div_assign);
+            if (accept('=')) return comp().tok(loc_, Tok::Tag::A_div_assign);
             return comp().tok(loc_, Tok::Tag::O_div);
         } else if (accept('%')) {
             if (accept('=')) return comp().tok(loc_, Tok::Tag::A_rem_assign);

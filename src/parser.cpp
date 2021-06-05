@@ -333,9 +333,9 @@ Ptr<Expr> Parser::parse_primary_expr(const char* ctxt) {
         case Tok::Tag::K_if:        return parse_if_expr();
         case Tok::Tag::K_match:     return parse_match_expr();
         case Tok::Tag::K_while:     return parse_while_expr();
-        case Tok::Tag::L_f:         return nullptr; // TODO
-        case Tok::Tag::L_s:         return nullptr; // TODO
-        case Tok::Tag::L_u:         return nullptr; // TODO
+        case Tok::Tag::L_f:
+        case Tok::Tag::L_s:
+        case Tok::Tag::L_u:         return parse_lit_expr();
         case Tok::Tag::M_id:        return parse_id_expr();
         default:
             assert(ctxt);
@@ -377,8 +377,14 @@ Ptr<BlockExpr> Parser::parse_block_expr(const char* ctxt) {
                 switch (ahead().tag()) {
                     case Tok::Tag::K_cn:
                     case Tok::Tag::K_fn:
-                    case Tok::Tag::B_lam:     stmts.emplace_back(parse_nom_stmt()); continue;
-                    default:                  expr = parse_expr();
+                    case Tok::Tag::B_lam:
+                        if (ahead(1).tag() == Tok::Tag::M_id) {
+                            stmts.emplace_back(parse_nom_stmt());
+                            continue;
+                        }
+                        [[fallthrough]]; // else parse as expression
+                    default:
+                        expr = parse_expr();
                 }
 
                 switch (ahead().tag()) {
@@ -432,6 +438,10 @@ Ptr<ForExpr> Parser::parse_for_expr() {
     auto expr = parse_expr("for-expression");
     auto body = parse_block_expr("body of a for-expression");
     return mk_ptr<ForExpr>(track, std::move(ptrn), std::move(expr), std::move(body));
+}
+
+Ptr<LitExpr> Parser::parse_lit_expr() {
+    return mk_ptr<LitExpr>(lex());
 }
 
 Ptr<MatchExpr> Parser::parse_match_expr() {
@@ -519,7 +529,11 @@ Ptr<ArExpr> Parser::parse_ar_expr() {
 }
 
 Ptr<WhileExpr> Parser::parse_while_expr() {
-    return nullptr;
+    auto track = tracker();
+    eat(Tok::Tag::K_while);
+    auto cond = parse_expr();
+    auto body = parse_block_expr("body of a while-expression");
+    return mk_ptr<WhileExpr>(track, std::move(cond), std::move(body));
 }
 
 /*

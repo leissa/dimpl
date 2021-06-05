@@ -102,6 +102,7 @@ void ErrorPtrn::bind(Scopes&) const {}
 void BottomExpr ::bind(Scopes&  ) const {}
 void ErrorExpr  ::bind(Scopes&  ) const {}
 void KeyExpr    ::bind(Scopes&  ) const {}
+void LitExpr    ::bind(Scopes&  ) const {}
 void UnknownExpr::bind(Scopes&  ) const {}
 void AbsExpr    ::bind(Scopes& s) const { abs->bind(s); }
 void FieldExpr  ::bind(Scopes& s) const { lhs->bind(s); }
@@ -172,6 +173,11 @@ void SigmaExpr::bind(Scopes& s) const {
 void ArExpr::bind(Scopes& s) const {
     for (auto&& dom : doms)
         dom->bind(s);
+    body->bind(s);
+}
+
+void WhileExpr::bind(Scopes& s) const {
+    cond->bind(s);
     body->bind(s);
 }
 

@@ -39,6 +39,7 @@ namespace dimpl {
     m(IdExpr)         \
     m(IfExpr)         \
     m(InfixExpr)      \
+    m(LitExpr)        \
     m(MatchExpr)      \
     m(PkExpr)         \
     m(PiExpr)         \
@@ -579,6 +580,35 @@ struct InfixExpr : public Expr {
     static constexpr auto Node = Node::InfixExpr;
 };
 
+struct LitExpr : public Expr {
+    LitExpr(Comp& comp, Tok tok)
+        : Expr(comp, tok.loc(), Node)
+        , tag(tok.tag())
+    {
+        switch (tag) {
+            case Tok::Tag::L_f: f_ = tok.f(); break;
+            case Tok::Tag::L_s: s_ = tok.s(); break;
+            case Tok::Tag::L_u: u_ = tok.u(); break;
+            default: THORIN_UNREACHABLE;
+        }
+    }
+
+    thorin::f64 f() const { assert(tag == Tok::Tag::L_f ); return f_; }
+    thorin::s64 s() const { assert(tag == Tok::Tag::L_s ); return s_; }
+    thorin::u64 u() const { assert(tag == Tok::Tag::L_u ); return u_; }
+
+    Stream& stream(Stream& s) const override;
+    void bind(Scopes&) const override;
+
+    Tok::Tag tag;
+    union {
+        thorin::f64 f_;
+        thorin::s64 s_;
+        thorin::u64 u_;
+    };
+    static constexpr auto Node = Node::LitExpr;
+};
+
 struct MatchExpr : public Expr {
     bool is_stmt_like() const override { return true; }
     Stream& stream(Stream& s) const override;
@@ -709,7 +739,18 @@ struct UnknownExpr : public Expr {
 };
 
 struct WhileExpr : public Expr {
+    WhileExpr(Comp& comp, Loc loc, Ptr<Expr>&& cond, Ptr<BlockExpr> body)
+        : Expr(comp, loc, Node)
+        , cond(std::move(cond))
+        , body(std::move(body))
+    {}
+
     bool is_stmt_like() const override { return true; }
+    Stream& stream(Stream& s) const override;
+    void bind(Scopes&) const override;
+
+    Ptr<Expr> cond;
+    Ptr<BlockExpr> body;
     static constexpr auto Node = Node::WhileExpr;
 };
 

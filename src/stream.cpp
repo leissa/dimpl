@@ -114,6 +114,7 @@ Stream& PostfixExpr::stream(Stream& s) const { return s.fmt("({}{})", lhs, Tok::
 Stream& PrefixExpr ::stream(Stream& s) const { return s.fmt("({}{})", Tok::tag2str(tag), rhs); }
 Stream& SigmaExpr  ::stream(Stream& s) const { return s.fmt("[{, }]", elems); }
 Stream& UnknownExpr::stream(Stream& s) const { return s.fmt("<?>"); }
+Stream& WhileExpr  ::stream(Stream& s) const { return s.fmt("while {} {}", cond, body); }
 
 Stream& AppExpr::stream(Stream& s) const {
     auto [delim_l, delim_r] = app_ftag2str(tag);
@@ -129,6 +130,14 @@ Stream& BlockExpr::stream(Stream& s) const {
     return s;
 }
 
+Stream& LitExpr::stream(Stream& stream) const {
+    switch (tag) {
+        case Tok::Tag::L_f: return stream.fmt("{}", f());
+        case Tok::Tag::L_s: return stream.fmt("{}", s());
+        case Tok::Tag::L_u: return stream.fmt("{}", u());
+        default: THORIN_UNREACHABLE;
+    }
+}
 
 Stream& PiExpr::stream(Stream& s) const {
 #if 0

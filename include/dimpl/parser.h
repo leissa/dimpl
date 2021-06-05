@@ -82,6 +82,7 @@ public:
     Ptr<ForExpr>    parse_for_expr();
     Ptr<IdExpr>     parse_id_expr();
     Ptr<IfExpr>     parse_if_expr();
+    Ptr<LitExpr>    parse_lit_expr();
     Ptr<MatchExpr>  parse_match_expr();
     Ptr<PiExpr>     parse_pi_expr();
     Ptr<PkExpr>     parse_pk_expr();
