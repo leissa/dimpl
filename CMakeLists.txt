@@ -56,12 +56,11 @@ if(NOT EXISTS "${PROJECT_SOURCE_DIR}/thorin/build")
 endif()
 find_package(Thorin REQUIRED PATHS ${PROJECT_SOURCE_DIR}/thorin/build/share/anydsl/cmake/)
 
+add_definitions(-fno-rtti)
+
 add_subdirectory(src) # <- libdimpl
 add_subdirectory(app) # <- dimpl binary
 include(CTest)
 if (BUILD_TESTING)
     add_subdirectory(unit-test) # <- dimpl-unit-test binary
 endif()
-
-
-
