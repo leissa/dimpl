@@ -8,12 +8,11 @@ namespace dimpl {
  * Scopes
  */
 
-const Decl* Scopes::find(Sym sym) {
+std::optional<const Decl*> Scopes::find(Sym sym) {
     for (auto i = scopes_.rbegin(); i != scopes_.rend(); ++i) {
-        auto& scope = *i;
-        if (auto decl = scope.lookup(sym)) return *decl;
+        if (auto decl = i->lookup(sym)) return decl;
     }
-    return nullptr;
+    return {};
 }
 
 void Scopes::insert(const Decl* decl) {
@@ -46,9 +45,14 @@ void Scopes::use(const Use* use) {
     if (use->id->is_anonymous()) {
         comp().err(use->id->loc, "identifier '_' is reserved for anonymous declarations");
     } else {
-        use->decl = find(use->sym());
-        if (!use->decl)
+        auto decl = find(use->sym());
+        if (decl) {
+            use->decl = *decl;
+        } else {
             comp().err(use->id->loc, "use of undeclared identifier '{}'", use->sym());
+            // put into scope so we don't see the same error over and over again
+            scopes_.back().emplace(use->sym(), nullptr);
+        }
     }
 }
 
