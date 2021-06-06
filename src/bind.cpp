@@ -77,8 +77,6 @@ void Binder::bind(Scopes& s) const {
  * Nom
  */
 
-void Nom::bind_rec(Scopes&) const {}
-
 void NomNom::bind(Scopes& s) const {
     type->bind(s);
     body->bind(s);
@@ -193,23 +191,18 @@ void WhileExpr::bind(Scopes& s) const {
  * Stmt
  */
 
+void ExprStmt::bind(Scopes& s) const { expr->bind(s); }
+void NomStmt::bind(Scopes& s) const { nom->bind(s); }
+
 void AssignStmt::bind(Scopes& s) const {
     lhs->bind(s);
     rhs->bind(s);
-}
-
-void ExprStmt::bind(Scopes& s) const {
-    expr->bind(s);
 }
 
 void LetStmt::bind(Scopes& s) const {
     if (init)
         init->bind(s);
     ptrn->bind(s);
-}
-
-void NomStmt::bind(Scopes& s) const {
-    nom->bind(s);
 }
 
 }

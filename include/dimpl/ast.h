@@ -182,7 +182,6 @@ struct Nom : public AST, public Decl {
         , Decl(this, std::move(id))
     {}
 
-    void bind_rec(Scopes&) const;
     virtual void bind(Scopes&) const = 0;
     //void emit(Emitter&) const;
 
