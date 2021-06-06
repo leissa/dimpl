@@ -49,30 +49,28 @@ using SymMap = thorin::HashMap<Sym, Val, SymHash>;
 using SymSet = thorin::HashSet<Sym, SymHash>;
 
 #define DIMPL_KEY(m)            \
-    m(K_Arity,     "Arity")     \
     m(K_Cn,        "Cn")        \
     m(K_Fn,        "Fn")        \
+    m(K_Kind,      "Kind")      \
+    m(K_Nat,       "Nat")       \
+    m(K_Type,      "Type")      \
     m(K_ar,        "ar")        \
-    m(K_arity,     "arity")     \
     m(K_cn,        "cn")        \
     m(K_else,      "else")      \
     m(K_false,     "false")     \
     m(K_fn,        "fn")        \
     m(K_for,       "for")       \
     m(K_if,        "if")        \
-    m(K_in,        "in")        \
     m(K_impl,      "impl")      \
-    m(K_kind,      "kind")      \
+    m(K_in,        "in")        \
     m(K_let,       "let")       \
     m(K_match,     "match")     \
     m(K_mut,       "mut")       \
-    m(K_nat,       "nat")       \
     m(K_nom,       "nom")       \
     m(K_pk,        "pk")        \
     m(K_struct,    "struct")    \
     m(K_trait,     "trait")     \
     m(K_true,      "true")      \
-    m(K_type,      "type")      \
     m(K_var,       "var")       \
     m(K_while,     "while")
 

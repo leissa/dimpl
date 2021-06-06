@@ -46,18 +46,18 @@ static FTag tag2ftag(Tok::Tag tag) {
                     case Tok::Tag::D_quote_l:   \
                     case Tok::Tag::K_Cn:        \
                     case Tok::Tag::K_Fn:        \
+                    case Tok::Tag::K_Kind:      \
+                    case Tok::Tag::K_Nat:       \
+                    case Tok::Tag::K_Type:      \
                     case Tok::Tag::K_ar:        \
                     case Tok::Tag::K_cn:        \
                     case Tok::Tag::K_false:     \
                     case Tok::Tag::K_fn:        \
                     case Tok::Tag::K_for:       \
                     case Tok::Tag::K_if:        \
-                    case Tok::Tag::K_kind:      \
                     case Tok::Tag::K_match:     \
-                    case Tok::Tag::K_nat:       \
                     case Tok::Tag::K_pk:        \
                     case Tok::Tag::K_true:      \
-                    case Tok::Tag::K_type:      \
                     case Tok::Tag::K_while:     \
                     case Tok::Tag::L_f:         \
                     case Tok::Tag::L_s:         \
@@ -236,7 +236,7 @@ Ptr<TupPtrn> Parser::parse_tup_ptrn(Tok::Tag delim_l, Tok::Tag delim_r, const ch
     }
 
     auto track = tracker();
-    auto ptrns = parse_list("closing delimiter of tuple pattern", delim_l, delim_r, [&]{ return parse_ptrn("sub-pattern of a tuple pattern"); });
+    auto ptrns = parse_list("closing delimiter of a tuple pattern", delim_l, delim_r, [&]{ return parse_ptrn("sub-pattern of a tuple pattern"); });
     return mk_ptr<TupPtrn>(track, std::move(ptrns));
 }
 
@@ -303,11 +303,11 @@ Ptr<FieldExpr> Parser::parse_field_expr(Tracker track, Ptr<Expr>&& lhs) {
 
 Ptr<Expr> Parser::parse_primary_expr(const char* ctxt) {
     switch (ahead().tag()) {
-        case Tok::Tag::K_nat:
-        case Tok::Tag::K_true:
+        case Tok::Tag::K_Kind:
+        case Tok::Tag::K_Nat:
+        case Tok::Tag::K_Type:
         case Tok::Tag::K_false:
-        case Tok::Tag::K_kind:
-        case Tok::Tag::K_type:      return mk_ptr<KeyExpr>(lex());
+        case Tok::Tag::K_true:      return mk_ptr<KeyExpr>(lex());
         case Tok::Tag::O_add:
         case Tok::Tag::O_and:
         case Tok::Tag::O_dec:
@@ -434,7 +434,7 @@ Ptr<IfExpr> Parser::parse_if_expr() {
 
 Ptr<ForExpr> Parser::parse_for_expr() {
     auto track = tracker();
-    auto ptrn = parse_tup_ptrn(Tok::Tag::K_for, Tok::Tag::K_in, "pattern of a for-expression");
+    auto ptrn = parse_tup_ptrn(Tok::Tag::K_for, Tok::Tag::K_in);
     auto expr = parse_expr("for-expression");
     auto body = parse_block_expr("body of a for-expression");
     return mk_ptr<ForExpr>(track, std::move(ptrn), std::move(expr), std::move(body));
