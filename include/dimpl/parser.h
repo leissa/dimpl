@@ -88,6 +88,7 @@ public:
     Ptr<PkExpr>     parse_pk_expr();
     Ptr<SigmaExpr>  parse_sigma_expr();
     Ptr<TupExpr>    parse_tup_expr(Tok::Tag delim_l = Tok::Tag::D_paren_l);
+    Ptr<VarExpr>    parse_var_expr();
     Ptr<WhileExpr>  parse_while_expr();
     //@}
 

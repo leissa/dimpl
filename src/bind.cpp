@@ -42,6 +42,16 @@ void Scopes::bind_stmts(const Ptrs<Stmt>& stmts) {
     }
 }
 
+void Scopes::use(const Use* use) {
+    if (use->id->is_anonymous()) {
+        comp().err(use->id->loc, "identifier '_' is reserved for anonymous declarations");
+    } else {
+        use->decl = find(use->sym());
+        if (!use->decl)
+            comp().err(use->id->loc, "use of undeclared identifier '{}'", use->sym());
+    }
+}
+
 //------------------------------------------------------------------------------
 
 /*
@@ -99,6 +109,9 @@ void ErrorPtrn::bind(Scopes&) const {}
  * Expr
  */
 
+void IdExpr ::bind(Scopes& s) const { s.use(this); }
+void VarExpr::bind(Scopes& s) const { s.use(this); }
+
 void BottomExpr ::bind(Scopes&  ) const {}
 void ErrorExpr  ::bind(Scopes&  ) const {}
 void KeyExpr    ::bind(Scopes&  ) const {}
@@ -129,15 +142,6 @@ void PiExpr::bind(Scopes& s) const {
 void ForExpr::bind(Scopes& s) const {
     ptrn->bind(s);
     body->bind(s);
-}
-
-void IdExpr::bind(Scopes& s) const {
-    if (!comp.is_anonymous(sym())) {
-        if (auto decl = s.find(sym()); !decl)
-            s.comp().err(loc, "use of undeclared identifier '{}'", sym());
-    } else {
-        s.comp().err(loc, "identifier '_' is reserved for anonymous declarations");
-    }
 }
 
 void IfExpr::bind(Scopes& s) const {

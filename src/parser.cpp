@@ -58,6 +58,7 @@ static FTag tag2ftag(Tok::Tag tag) {
                     case Tok::Tag::K_match:     \
                     case Tok::Tag::K_pk:        \
                     case Tok::Tag::K_true:      \
+                    case Tok::Tag::K_var:       \
                     case Tok::Tag::K_while:     \
                     case Tok::Tag::L_f:         \
                     case Tok::Tag::L_s:         \
@@ -332,6 +333,7 @@ Ptr<Expr> Parser::parse_primary_expr(const char* ctxt) {
         case Tok::Tag::K_for:       return parse_for_expr();
         case Tok::Tag::K_if:        return parse_if_expr();
         case Tok::Tag::K_match:     return parse_match_expr();
+        case Tok::Tag::K_var:       return parse_var_expr();
         case Tok::Tag::K_while:     return parse_while_expr();
         case Tok::Tag::L_f:
         case Tok::Tag::L_s:
@@ -526,6 +528,12 @@ Ptr<ArExpr> Parser::parse_ar_expr() {
         expect(Tok::Tag::D_bracket_r, "closing delimiter of an array");
 
     return mk_ptr<ArExpr>(track, std::move(doms), std::move(body));
+}
+
+Ptr<VarExpr> Parser::parse_var_expr() {
+    auto track = tracker();
+    eat(Tok::Tag::K_var);
+    return mk_ptr<VarExpr>(track, parse_id("identifier of a var-expression"));
 }
 
 Ptr<WhileExpr> Parser::parse_while_expr() {

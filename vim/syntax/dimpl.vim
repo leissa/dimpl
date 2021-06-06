@@ -13,7 +13,7 @@ syn keyword     dimplRepeat        for in while
 syn keyword     dimplStorageClass  let mut
 syn keyword     dimplStructure     nom struct trait 
 syn keyword     dimplTypedef       type
-syn keyword     dimplType          Bool Index Sint Uint Float Nat Type Kind Cn Fn
+syn keyword     dimplType          Bool Idx Sint Uint Float Nat Type Kind Cn Fn
 syn keyword     dimplType          S8 S16 S32 S64
 syn keyword     dimplType          U8 U16 U32 U64
 "syn keyword     dimplOperator      as

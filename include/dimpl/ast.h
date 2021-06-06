@@ -49,6 +49,7 @@ namespace dimpl {
     m(ArExpr)         \
     m(SigmaExpr)      \
     m(UnknownExpr)    \
+    m(VarExpr)        \
     m(WhileExpr)
 
 namespace Node {
@@ -124,19 +125,35 @@ struct Id : public AST {
     Stream& stream(Stream& s) const override;
 
     Sym sym;
+
     static constexpr auto Node = Node::Id;
 };
 
 struct Decl {
-    Decl(Ptr<Id>&& id)
-        : id(std::move(id))
+    Decl(const AST* ast, Ptr<Id>&& id)
+        : ast(ast)
+        , id(std::move(id))
     {}
 
     bool is_anonymous() const { return id->is_anonymous(); }
     Sym sym() const { return id->sym; }
 
+    const AST* ast;
     Ptr<Id> id;
     const thorin::Def* def;
+};
+
+struct Use {
+    Use(const AST* ast, Ptr<Id>&& id)
+        : ast(ast)
+        , id(std::move(id))
+    {}
+
+    Sym sym() const { return id->sym; }
+
+    const AST* ast;
+    Ptr<Id> id;
+    mutable const Decl* decl = nullptr;
 };
 
 struct Expr : public AST {
@@ -162,7 +179,7 @@ struct Ptrn : public AST {
 struct Nom : public AST, public Decl {
     Nom(Comp& comp, Loc loc, int node, Ptr<Id>&& id)
         : AST(comp, loc, node)
-        , Decl(std::move(id))
+        , Decl(this, std::move(id))
     {}
 
     void bind_rec(Scopes&) const;
@@ -190,7 +207,7 @@ struct Prg : public AST {
 struct Binder : public AST , public Decl {
     Binder(Comp& comp, Loc loc, Ptr<Id> id, Ptr<Expr> type)
         : AST(comp, loc, Node)
-        , Decl(std::move(id))
+        , Decl(this, std::move(id))
         , type(std::move(type))
     {}
 
@@ -277,7 +294,7 @@ struct ErrorPtrn : public Ptrn {
 struct IdPtrn : public Ptrn, public Decl {
     IdPtrn(Comp& comp, Loc loc, bool mut, Ptr<Id>&& id, Ptr<Expr>&& type)
         : Ptrn(comp, loc, Node)
-        , Decl(std::move(id))
+        , Decl(this, std::move(id))
         , mut(mut)
         , type(std::move(type))
     {}
@@ -502,6 +519,7 @@ struct FieldExpr : public Expr {
 
     Ptr<Expr> lhs;
     Ptr<Id> id;
+
     static constexpr auto Node = Node::FieldExpr;
 };
 
@@ -525,20 +543,15 @@ struct ForExpr : public Expr {
     static constexpr auto Node = Node::ForExpr;
 };
 
-struct IdExpr : public Expr {
+struct IdExpr : public Expr, public Use {
     IdExpr(Comp& comp, Ptr<Id>&& id)
         : Expr(comp, id->loc, Node)
-        , id(std::move(id))
+        , Use(this, std::move(id))
     {}
-
-    Sym sym() const { return id->sym; }
 
     Stream& stream(Stream& s) const override;
     void bind(Scopes&) const override;
     //const thorin::Def* emit(Emitter&) const override;
-
-    Ptr<Id> id;
-    const Decl* decl;
 
     static constexpr auto Node = Node::IdExpr;
 };
@@ -559,6 +572,7 @@ struct IfExpr : public Expr {
     Ptr<Expr> cond;
     Ptr<Expr> then_expr;
     Ptr<Expr> else_expr;
+
     static constexpr auto Node = Node::IfExpr;
 };
 
@@ -577,6 +591,7 @@ struct InfixExpr : public Expr {
     Ptr<Expr> lhs;
     Tok::Tag tag;
     Ptr<Expr> rhs;
+
     static constexpr auto Node = Node::InfixExpr;
 };
 
@@ -606,6 +621,7 @@ struct LitExpr : public Expr {
         thorin::s64 s_;
         thorin::u64 u_;
     };
+
     static constexpr auto Node = Node::LitExpr;
 };
 
@@ -614,6 +630,7 @@ struct MatchExpr : public Expr {
     Stream& stream(Stream& s) const override;
     void bind(Scopes&) const override;
     //const thorin::Def* emit(Emitter&) const override;
+
     static constexpr auto Node = Node::MatchExpr;
 };
 
@@ -630,6 +647,7 @@ struct PkExpr : public Expr {
 
     Ptrs<Binder> doms;
     Ptr<Expr> body;
+
     static constexpr auto Node = Node::PkExpr;
 };
 
@@ -648,6 +666,7 @@ struct PiExpr : public Expr {
     FTag tag;
     Ptr<Binder> dom;
     Ptr<Expr> codom;
+
     static constexpr auto Node = Node::PiExpr;
 };
 
@@ -664,6 +683,7 @@ struct PrefixExpr : public Expr {
 
     Tok::Tag tag;
     Ptr<Expr> rhs;
+
     static constexpr auto Node = Node::PrefixExpr;
 };
 
@@ -680,6 +700,7 @@ struct PostfixExpr : public Expr {
 
     Ptr<Expr> lhs;
     Tok::Tag tag;
+
     static constexpr auto Node = Node::PostfixExpr;
 };
 
@@ -694,6 +715,7 @@ struct KeyExpr : public Expr {
     //const thorin::Def* emit(Emitter&) const override;
 
     Sym sym;
+
     static constexpr auto Node = Node::KeyExpr;
 };
 
@@ -710,6 +732,7 @@ struct ArExpr : public Expr {
 
     Ptrs<Binder> doms;
     Ptr<Expr> body;
+
     static constexpr auto Node = Node::ArExpr;
 };
 
@@ -724,6 +747,7 @@ struct SigmaExpr : public Expr {
     //const thorin::Def* emit(Emitter&) const override;
 
     Ptrs<Binder> elems;
+
     static constexpr auto Node = Node::SigmaExpr;
 };
 
@@ -735,7 +759,20 @@ struct UnknownExpr : public Expr {
     Stream& stream(Stream& s) const override;
     void bind(Scopes&) const override;
     //const thorin::Def* emit(Emitter&) const override;
+
     static constexpr auto Node = Node::UnknownExpr;
+};
+
+struct VarExpr : public Expr, public Use {
+    VarExpr(Comp& comp, Loc loc, Ptr<Id>&& id)
+        : Expr(comp, loc, Node)
+        , Use(this, std::move(id))
+    {}
+
+    Stream& stream(Stream& s) const override;
+    void bind(Scopes&) const override;
+
+    static constexpr auto Node = Node::VarExpr;
 };
 
 struct WhileExpr : public Expr {
@@ -751,6 +788,7 @@ struct WhileExpr : public Expr {
 
     Ptr<Expr> cond;
     Ptr<BlockExpr> body;
+
     static constexpr auto Node = Node::WhileExpr;
 };
 

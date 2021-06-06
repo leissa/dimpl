@@ -114,6 +114,7 @@ Stream& PostfixExpr::stream(Stream& s) const { return s.fmt("({}{})", lhs, Tok::
 Stream& PrefixExpr ::stream(Stream& s) const { return s.fmt("({}{})", Tok::tag2str(tag), rhs); }
 Stream& SigmaExpr  ::stream(Stream& s) const { return s.fmt("[{, }]", elems); }
 Stream& UnknownExpr::stream(Stream& s) const { return s.fmt("<?>"); }
+Stream& VarExpr    ::stream(Stream& s) const { return s.fmt("var {}", id); }
 Stream& WhileExpr  ::stream(Stream& s) const { return s.fmt("while {} {}", cond, body); }
 
 Stream& AppExpr::stream(Stream& s) const {

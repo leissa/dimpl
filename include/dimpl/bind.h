@@ -7,6 +7,7 @@ namespace dimpl {
 
 struct Decl;
 struct Stmt;
+struct Use;
 
 //------------------------------------------------------------------------------
 
@@ -21,6 +22,7 @@ public:
     void push() { scopes_.emplace_back(); }
     void pop()  { scopes_.pop_back(); }
     void insert(const Decl*);
+    void use(const Use*);
     const Decl* find(Sym);
     void bind_stmts(const Ptrs<Stmt>&);
 
