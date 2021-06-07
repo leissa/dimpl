@@ -125,7 +125,7 @@ private:
     void err(const std::string& what, const Tok& tok, const char* ctxt);
 
     template<class F>
-    auto parse_list(Tok::Tag delim_r, F f, Tok::Tag sep = Tok::Tag::P_comma) -> std::deque<decltype(f())> {
+    auto parse_list(Tok::Tag delim_r, F f, Tok::Tag sep = Tok::Tag::P_comma) {
         std::deque<decltype(f())> result;
         if (!ahead().isa(delim_r)) {
             do {
@@ -135,7 +135,7 @@ private:
         return result;
     }
     template<class F>
-    auto parse_list(const char* ctxt, Tok::Tag delim_l, Tok::Tag delim_r, F f, Tok::Tag sep = Tok::Tag::P_comma) -> std::deque<decltype(f())>  {
+    auto parse_list(const char* ctxt, Tok::Tag delim_l, Tok::Tag delim_r, F f, Tok::Tag sep = Tok::Tag::P_comma) {
         eat(delim_l);
         auto result = parse_list(delim_r, f, sep);
         expect(delim_r, ctxt);

@@ -98,8 +98,7 @@ void NomNom::bind(Scopes& s) const {
 void AbsNom::bind(Scopes& s) const {
     s.push();
     s.insert(this);
-    if (meta) meta->bind(s);
-    if (dom ) dom ->bind(s);
+    for (auto&& dom : doms) dom->bind(s);
     body ->bind(s);
     codom->bind(s);
     s.pop();
@@ -175,14 +174,12 @@ void InfixExpr::bind(Scopes& s) const {
 }
 
 void TupExpr::bind(Scopes& s) const {
-    for (auto&& elem : elems)
-        elem->bind(s);
+    for (auto&& elem : elems) elem->bind(s);
     type->bind(s);
 }
 
 void PkExpr::bind(Scopes& s) const {
-    for (auto&& dom : doms)
-        dom->bind(s);
+    for (auto&& dom : doms) dom->bind(s);
     body->bind(s);
 }
 
@@ -193,13 +190,11 @@ void SigmaExpr::bind(Scopes& s) const {
 }
 
 void SigmaExpr::bind_unscoped(Scopes& s) const {
-    for (auto&& elem : elems)
-        elem->infiltrate(s);
+    for (auto&& elem : elems) elem->infiltrate(s);
 }
 
 void ArExpr::bind(Scopes& s) const {
-    for (auto&& dom : doms)
-        dom->bind(s);
+    for (auto&& dom : doms) dom->bind(s);
     body->bind(s);
 }
 

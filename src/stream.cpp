@@ -28,15 +28,12 @@ Stream& NomNom::stream(Stream& s) const {
 }
 
 Stream& AbsNom::stream(Stream& s) const {
-    s.fmt("{} ", Tok::tag2str(tag));
+    s.fmt("{} ", tag);
     if (!id->is_anonymous()) id->stream(s);
-    if (meta) meta->stream(s);
+    s.fmt("{}", doms);
     if (dom) s.fmt("{} ", dom);
-    if (comp.fancy && !isa<UnknownExpr>(codom)) s.fmt("→ {} ", codom);
-    if (isa<BlockExpr>(body))
-        s.fmt("{}", body);
-    else
-        s.fmt("{{ {} }}", body);
+    if (!comp.fancy || !isa<UnknownExpr>(codom)) s.fmt("→ {} ", codom);
+    s.fmt("{}{}", body, isa<BlockExpr>(body) ? "" : ";");
     return s;
 }
 
@@ -45,7 +42,7 @@ Stream& AbsNom::stream(Stream& s) const {
  */
 
 Stream& IdPtrn   ::stream(Stream& s) const { return s.fmt("{}{}: {}", mut ? "mut " : "", id, type); }
-Stream& TupPtrn  ::stream(Stream& s) const { return s.fmt("({, })", elems); }
+Stream& TupPtrn  ::stream(Stream& s) const { return s.fmt("{}{, }{}", delim_l, elems, delim_r); }
 Stream& ErrorPtrn::stream(Stream& s) const { return s.fmt("<error pattern>"); }
 
 /*
@@ -60,12 +57,12 @@ Stream& FieldExpr  ::stream(Stream& s) const { return s.fmt("{}.{}", lhs, id); }
 Stream& ForExpr    ::stream(Stream& s) const { return s.fmt("for {} in {} {}", ptrn, expr, body); }
 Stream& IdExpr     ::stream(Stream& s) const { return s.fmt("{}", id); }
 Stream& IfExpr     ::stream(Stream& s) const { return s.fmt("if {} {} else {}", cond, then_expr, else_expr); }
-Stream& InfixExpr  ::stream(Stream& s) const { return s.fmt("({} {} {})", lhs, Tok::tag2str(tag), rhs); }
+Stream& InfixExpr  ::stream(Stream& s) const { return s.fmt("({} {} {})", lhs, tag, rhs); }
 Stream& KeyExpr    ::stream(Stream& s) const { return s.fmt("{}", sym); }
-Stream& PiExpr     ::stream(Stream& s) const { return s.fmt("{} {} → {}", Tok::tag2str(tag), dom, codom); }
+Stream& PiExpr     ::stream(Stream& s) const { return s.fmt("{} {} → {}", tag, dom, codom); }
 Stream& PkExpr     ::stream(Stream& s) const { return s.fmt("‹{, }; {}›", doms, body); }
-Stream& PostfixExpr::stream(Stream& s) const { return s.fmt("({}{})", lhs, Tok::tag2str(tag)); }
-Stream& PrefixExpr ::stream(Stream& s) const { return s.fmt("({}{})", Tok::tag2str(tag), rhs); }
+Stream& PostfixExpr::stream(Stream& s) const { return s.fmt("({}{})", lhs, tag); }
+Stream& PrefixExpr ::stream(Stream& s) const { return s.fmt("({}{})", tag, rhs); }
 Stream& SigmaExpr  ::stream(Stream& s) const { return s.fmt("[{, }]", elems); }
 Stream& TupElem    ::stream(Stream& s) const { return s.fmt("{}", expr); }
 Stream& TupExpr    ::stream(Stream& s) const { return s.fmt("({, })", elems); }
@@ -103,7 +100,7 @@ Stream& LitExpr::stream(Stream& stream) const {
  */
 
 Stream& ExprStmt  ::stream(Stream& s) const { return s.fmt("{};", expr); }
-Stream& AssignStmt::stream(Stream& s) const { return s.fmt("{} {} {};", lhs, Tok::tag2str(tag), rhs); }
+Stream& AssignStmt::stream(Stream& s) const { return s.fmt("{} {} {};", lhs, tag, rhs); }
 Stream& NomStmt   ::stream(Stream& s) const { return s.fmt("{}\n", nom); }
 
 Stream& LetStmt::stream(Stream& s) const {

@@ -287,6 +287,8 @@ private:
     Sym anonymous_;
 };
 
+inline std::ostream& operator<<(std::ostream& o, Tok::Tag tag) { return o << Tok::tag2str(tag); }
+
 }
 
 #endif

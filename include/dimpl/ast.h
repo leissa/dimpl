@@ -240,10 +240,10 @@ struct NomNom : public Nom {
 };
 
 struct AbsNom : public Nom {
-    AbsNom(Comp& comp, Loc loc, Tok::Tag tag, Ptr<Id>&& id, Ptr<Ptrn>&& meta, Ptr<Ptrn>&& dom, Ptr<Expr>&& codom, Ptr<Expr>&& body)
+    AbsNom(Comp& comp, Loc loc, Tok::Tag tag, Ptr<Id>&& id, Ptrs<Ptrn>&& doms, Ptr<Ptrn>&& dom, Ptr<Expr>&& codom, Ptr<Expr>&& body)
         : Nom(comp, loc, Node, std::move(id))
         , tag(tag)
-        , meta(std::move(meta))
+        , doms(std::move(doms))
         , dom(std::move(dom))
         , codom(std::move(codom))
         , body(std::move(body))
@@ -254,7 +254,7 @@ struct AbsNom : public Nom {
     //const thorin::Def* emit(Emitter&) const override;
 
     Tok::Tag tag;
-    Ptr<Ptrn> meta;
+    Ptrs<Ptrn> doms;
     Ptr<Ptrn> dom;
     Ptr<Expr> codom;
     Ptr<Expr> body;
@@ -308,16 +308,20 @@ struct IdPtrn : public Ptrn, public Decl {
 };
 
 struct TupPtrn : public Ptrn {
-    TupPtrn(Comp& comp, Loc loc, Ptrs<Ptrn>&& elems)
+    TupPtrn(Comp& comp, Loc loc, Tok::Tag delim_l, Ptrs<Ptrn>&& elems, Tok::Tag delim_r)
         : Ptrn(comp, loc, Node)
+        , delim_l(delim_l)
         , elems(std::move(elems))
+        , delim_r(delim_r)
     {}
 
     Stream& stream(Stream& s) const override;
     void bind(Scopes&) const override;
     //void emit(Emitter&, const thorin::Def*) const override;
 
+    Tok::Tag delim_l;
     Ptrs<Ptrn> elems;
+    Tok::Tag delim_r;
     static constexpr auto Node = Node::TupPtrn;
 };
 

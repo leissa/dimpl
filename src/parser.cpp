@@ -178,11 +178,18 @@ Ptr<AbsNom> Parser::parse_abs_nom() {
     auto track = tracker();
     auto tag = lex().tag();
     auto id = ahead().isa(Tok::Tag::M_id) ? parse_id() : mk_id("_");
-    auto meta = ahead().isa(Tok::Tag::D_bracket_l) ? parse_tup_ptrn(Tok::Tag::D_bracket_l, Tok::Tag::D_bracket_r) : nullptr;
-    auto dom = parse_tup_ptrn(Tok::Tag::D_paren_l, Tok::Tag::D_paren_r, "domain of a function");
+
+    Ptrs<Ptrn> doms;
+    while (ahead().tag() == Tok::Tag::D_bracket_l)
+        doms.emplace_back(parse_tup_ptrn(Tok::Tag::D_bracket_l, Tok::Tag::D_bracket_r));
+
+    Ptr<Ptrn> dom;
+    if (tag != Tok::Tag::B_lam)
+        dom = parse_tup_ptrn(Tok::Tag::D_paren_l, Tok::Tag::D_paren_r, "domain of a function");
+
     auto codom = accept(Tok::Tag::P_arrow) ? parse_expr("codomain of an function") : mk_unknown_expr();
     auto body = parse_expr("body of a function");
-    return mk_ptr<AbsNom>(track, tag, std::move(id), std::move(meta), std::move(dom), std::move(codom), std::move(body));
+    return mk_ptr<AbsNom>(track, tag, std::move(id), std::move(doms), std::move(dom), std::move(codom), std::move(body));
 }
 
 Ptr<SigNom> Parser::parse_sig_nom() {
@@ -218,12 +225,12 @@ Ptr<IdPtrn> Parser::parse_id_ptrn() {
 Ptr<TupPtrn> Parser::parse_tup_ptrn(Tok::Tag delim_l, Tok::Tag delim_r, const char* ctxt) {
     if (ctxt && !ahead().isa(delim_l)) {
         err("tuple pattern", ctxt);
-        return mk_ptr<TupPtrn>(prev_, mk_ptrs<Ptrn>());
+        return mk_ptr<TupPtrn>(prev_, delim_l, mk_ptrs<Ptrn>(), delim_r);
     }
 
     auto track = tracker();
     auto ptrns = parse_list("closing delimiter of a tuple pattern", delim_l, delim_r, [&]{ return parse_ptrn("sub-pattern of a tuple pattern"); });
-    return mk_ptr<TupPtrn>(track, std::move(ptrns));
+    return mk_ptr<TupPtrn>(track, delim_l, std::move(ptrns), delim_r);
 }
 
 /*
