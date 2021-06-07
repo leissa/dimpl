@@ -446,11 +446,7 @@ Ptr<PkExpr> Parser::parse_pk_expr() {
     auto doms = parse_list(Tok::Tag::P_semicolon, [&]{ return parse_binder(); });
     expect(Tok::Tag::P_semicolon, "pack");
     auto body = parse_expr("body of a pack");
-
-    if (angle)
-        expect(Tok::Tag::D_angle_r, "closing delimiter of an angle-style pack");
-    else
-        expect(Tok::Tag::D_paren_r, "closing delimiter of a pack");
+    expect(angle ? Tok::Tag::D_angle_r : Tok::Tag::D_paren_r, "closing delimiter of a pack");
 
     return mk_ptr<PkExpr>(track, std::move(doms), std::move(body));
 }
@@ -506,11 +502,7 @@ Ptr<ArExpr> Parser::parse_ar_expr() {
     auto doms = parse_list(Tok::Tag::P_semicolon, [&]{ return parse_binder(); });
     expect(Tok::Tag::P_semicolon, "array");
     auto body = parse_expr("body of an array");
-
-    if (quote)
-        expect(Tok::Tag::D_quote_r, "closing delimiter of a quote-style array");
-    else
-        expect(Tok::Tag::D_bracket_r, "closing delimiter of an array");
+    expect(quote ? Tok::Tag::D_quote_r : Tok::Tag::D_bracket_r, "closing delimiter of an array");
 
     return mk_ptr<ArExpr>(track, std::move(doms), std::move(body));
 }
