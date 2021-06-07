@@ -743,6 +743,7 @@ struct SigmaExpr : public Expr {
 
     Stream& stream(Stream& s) const override;
     void bind(Scopes&) const override;
+    void import(Scopes&) const;
     //const thorin::Def* emit(Emitter&) const override;
 
     Ptrs<Binder> elems;

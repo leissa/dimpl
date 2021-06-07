@@ -22,8 +22,12 @@ void Scopes::insert(const Decl* decl) {
     if (comp().is_anonymous(sym)) return;
 
     if (auto&& [i, succ] = scopes_.back().emplace(sym, decl); !succ) {
-        comp().err(decl->id->loc, "redefinition of '{}'", sym);
-        comp().note(i->second->id->loc, "previous declaration of '{}' was here", sym);
+        if (i->second) {
+            comp().err(decl->id->loc, "redefinition of '{}'", sym);
+            comp().note(i->second->id->loc, "previous declaration of '{}' was here", sym);
+        } else {
+            i->second = decl;
+        }
     }
 }
 
@@ -69,8 +73,8 @@ void Prg::bind(Scopes& s) const {
 }
 
 void Binder::bind(Scopes& s) const {
-    s.insert(this);
     type->bind(s);
+    s.insert(this);
 }
 
 /*
@@ -172,8 +176,21 @@ void PkExpr::bind(Scopes& s) const {
 }
 
 void SigmaExpr::bind(Scopes& s) const {
-    for (auto&& elem : elems)
+    s.push();
+    for (auto&& elem : elems) {
+        if (auto sigma = isa<SigmaExpr>(elem->type))
+            sigma->import(s);
         elem->bind(s);
+    }
+    s.pop();
+}
+
+void SigmaExpr::import(Scopes& s) const {
+    for (auto&& elem : elems) {
+        if (auto sigma = isa<SigmaExpr>(elem->type))
+            sigma->import(s);
+        s.insert(elem.get());
+    }
 }
 
 void ArExpr::bind(Scopes& s) const {
