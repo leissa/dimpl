@@ -105,7 +105,7 @@ constexpr auto Num_Keys  = size_t(0) DIMPL_KEY(CODE);
     m(P_comma,        ",")              \
     m(P_dot,          ".")              \
     m(P_semicolon,    ";")              \
-    m(P_arrow,        "->")             \
+    m(P_arrow,        "→")              \
     /* binder */                        \
     m(B_lam,          "λ")              \
     m(B_forall,       "∀")
@@ -237,6 +237,7 @@ public:
     int num_warnings() const { return num_warnings_; }
     int num_errors() const { return num_errors_; }
     thorin::World& world() { return world_; }
+    Sym sym(const std::string& s) { return {world().tuple_str(s)}; }
     //@}
 
     /// @name err/warn/note
@@ -271,14 +272,6 @@ public:
         errf("{}: note: ", loc);
         return err(fmt, std::forward<Args&&>(args)...);
     }
-    //@}
-
-    /// @name factory methods
-    //@{
-    Sym sym(const std::string& s) { return {world().tuple_str(s)}; }
-    Tok tok(Loc loc, Tok::Tag tag)  { return {loc, tag, sym(Tok::tag2str(tag))}; }
-    Tok tok(Loc loc, Tok::Tag tag, Sym sym) { return {loc, tag, sym}; }
-    Tok tok(Loc loc, const char* s = "_") { return {loc, Tok::Tag::M_id, sym(s)}; }
     //@}
 
     /// @name options

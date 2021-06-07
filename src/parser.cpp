@@ -136,7 +136,7 @@ Ptr<Prg> Parser::parse_prg() {
 Ptr<Id> Parser::parse_id(const char* ctxt) {
     if (ctxt == nullptr || ahead().isa(Tok::Tag::M_id)) return mk_ptr<Id>(eat(Tok::Tag::M_id));
     err("identifier", ctxt);
-    return mk_ptr<Id>(comp().tok(prev_, "<error>"));
+    return mk_ptr<Id>(tok_id(prev_, "<error>"));
 }
 
 Ptr<Binder> Parser::parse_binder() {
@@ -191,7 +191,7 @@ Ptr<NomNom> Parser::parse_nom_nom() {
 
 Ptr<AbsNom> Parser::parse_abs_nom() {
     auto track = tracker();
-    auto tag = tag2ftag(lex().tag());
+    auto tag = lex().tag();
     auto id = ahead().isa(Tok::Tag::M_id) ? parse_id() : mk_id("_");
     auto meta = ahead().isa(Tok::Tag::D_bracket_l) ? parse_tup_ptrn(Tok::Tag::D_bracket_l, Tok::Tag::D_bracket_r) : nullptr;
     auto dom = parse_tup_ptrn(Tok::Tag::D_paren_l, Tok::Tag::D_paren_r, "domain of a function");
@@ -289,7 +289,7 @@ Ptr<Expr> Parser::parse_postfix_expr(Tracker track, Ptr<Expr>&& lhs) {
 
 Ptr<AppExpr> Parser::parse_app_expr(Tracker track, Ptr<Expr>&& callee) {
     auto delim_l = ahead().tag();
-    return mk_ptr<AppExpr>(track, tag2ftag(delim_l), std::move(callee), parse_tup_expr(delim_l));
+    return mk_ptr<AppExpr>(track, delim_l, std::move(callee), parse_tup_expr(delim_l));
 }
 
 Ptr<FieldExpr> Parser::parse_field_expr(Tracker track, Ptr<Expr>&& lhs) {
@@ -472,11 +472,11 @@ Ptr<PkExpr> Parser::parse_pk_expr() {
 
 Ptr<PiExpr> Parser::parse_pi_expr() {
     auto track = tracker();
-    auto tag = tag2ftag(lex().tag());
+    auto tag = lex().tag();
     auto dom = parse_binder();
 
     Ptr<Expr> codom;
-    if (tag != FTag::Cn) {
+    if (tag != Tok::Tag::K_Cn) {
         expect(Tok::Tag::P_arrow, "for-all type");
         codom = parse_expr("codomain");
     }
@@ -503,7 +503,7 @@ Ptr<TupExpr> Parser::parse_tup_expr(Tok::Tag delim_l) {
             id = mk_id("_");
         }
         auto expr = parse_expr("tuple element");
-        return mk_ptr<TupExpr::Elem>(track, std::move(id), std::move(expr));
+        return mk_ptr<TupElem>(track, std::move(id), std::move(expr));
     });
 
     auto type = parse_type_ascr();

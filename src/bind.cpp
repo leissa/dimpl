@@ -136,6 +136,8 @@ void AbsExpr    ::bind(Scopes& s) const { abs->bind(s); }
 void FieldExpr  ::bind(Scopes& s) const { lhs->bind(s); }
 void PostfixExpr::bind(Scopes& s) const { lhs->bind(s); }
 void PrefixExpr ::bind(Scopes& s) const { rhs->bind(s); }
+void TupElem    ::bind(Scopes& s) const { expr->bind(s); }
+
 
 void AppExpr::bind(Scopes& s) const {
     callee->bind(s);
@@ -150,8 +152,10 @@ void BlockExpr::bind(Scopes& s) const {
 }
 
 void PiExpr::bind(Scopes& s) const {
-    dom->bind(s);
+    s.push();
+    dom->infiltrate(s);
     codom->bind(s);
+    s.pop();
 }
 
 void ForExpr::bind(Scopes& s) const {
@@ -169,8 +173,6 @@ void InfixExpr::bind(Scopes& s) const {
     lhs->bind(s);
     rhs->bind(s);
 }
-
-void TupExpr::Elem::bind(Scopes& s) const { expr->bind(s); }
 
 void TupExpr::bind(Scopes& s) const {
     for (auto&& elem : elems)

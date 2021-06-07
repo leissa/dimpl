@@ -103,19 +103,20 @@ private:
     //@{
     Ptr<BlockExpr>    mk_empty_block_expr() { return mk_ptr<BlockExpr>  (prev_, Ptrs<Stmt>{}, mk_unit_tup()); }
     Ptr<ErrorExpr>    mk_error_expr()       { return mk_ptr<ErrorExpr>  (prev_); }
-    Ptr<TupExpr>      mk_unit_tup()         { return mk_ptr<TupExpr>  (prev_, Ptrs<TupExpr::Elem>{}, mk_unknown_expr()); }
+    Ptr<TupExpr>      mk_unit_tup()         { return mk_ptr<TupExpr>  (prev_, Ptrs<TupElem>{}, mk_unknown_expr()); }
     Ptr<UnknownExpr>  mk_unknown_expr()     { return mk_ptr<UnknownExpr>(prev_); }
 
     template<class T, class... Args>
     Ptr<T> mk_ptr(Args&&... args) { return std::make_unique<const T>(comp(), std::forward<Args>(args)...); }
 
-    Ptr<TupExpr::Elem> mk_tup_elem(Ptr<Expr>&& expr) {
+    Ptr<TupElem> mk_tup_elem(Ptr<Expr>&& expr) {
         auto loc = expr->loc;
-        return mk_ptr<TupExpr::Elem>(loc, mk_ptr<Id>(comp().tok(loc)), std::move(expr));
+        return mk_ptr<TupElem>(loc, mk_ptr<Id>(tok_id(loc)), std::move(expr));
     }
     Ptr<Id> mk_id(const char* s)  { return mk_ptr<Id>(prev_, comp().sym(s)); }
     //@}
 
+    Tok tok_id(Loc loc, const char* s = "_") { return {loc, Tok::Tag::M_id, comp().sym(s)}; }
     const Tok& ahead(size_t i = 0) const { assert(i < max_ahead); return ahead_[i]; }
     Tok eat(Tok::Tag tag) { assert_unused(tag == ahead().tag() && "internal parser error"); return lex(); }
     bool accept(Tok::Tag tok);

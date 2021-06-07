@@ -13,7 +13,9 @@ public:
 
     Tok lex(); ///< Get next \p Tok in stream.
     Comp& comp() { return comp_; }
+
 private:
+    Tok tok(Tok::Tag tag) { return {loc_, tag, comp().sym(str_)}; }
     bool eof() const { return stream_.eof(); }
     void eat_comments();
     Tok parse_literal();
