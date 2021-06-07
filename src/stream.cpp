@@ -8,19 +8,6 @@
 namespace dimpl {
 
 /*
- * helpers
- */
-
-const char* pi_ftag2str(FTag tag) {
-    switch (tag) {
-        case FTag::DS: return "\\/";
-        case FTag::Fn: return "Fn";
-        case FTag::Cn: return "Cn";
-        default: THORIN_UNREACHABLE;
-    }
-}
-
-/*
  * misc
  */
 

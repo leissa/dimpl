@@ -4,21 +4,6 @@
 
 namespace dimpl {
 
-static FTag tag2ftag(Tok::Tag tag) {
-    switch (tag) {
-        case Tok::Tag::B_forall:
-        case Tok::Tag::B_lam:
-        case Tok::Tag::D_bracket_l:     return FTag::DS;
-        case Tok::Tag::K_Fn:
-        case Tok::Tag::K_fn:
-        case Tok::Tag::D_paren_l:       return FTag::Fn;
-        case Tok::Tag::K_Cn:
-        case Tok::Tag::K_cn:
-        case Tok::Tag::D_not_bracket_l: return FTag::Cn;
-        default: THORIN_UNREACHABLE;
-    }
-}
-
 #define Tok__Tag__Assign Tok::Tag::A_assign:    \
                     case Tok::Tag::A_add_assign: \
                     case Tok::Tag::A_sub_assign: \

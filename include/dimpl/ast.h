@@ -69,8 +69,6 @@ class Scopes;
 struct Expr;
 struct Stmt;
 
-enum class FTag { DS, Fn, Cn };
-
 namespace detail {
     template<class T> void mk_ptrs(Ptrs<T>&) {}
     template<class T, class A, class... Args>
