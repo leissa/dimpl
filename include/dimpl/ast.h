@@ -212,6 +212,7 @@ struct Binder : public AST , public Decl {
 
     Stream& stream(Stream& s) const override;
     void bind(Scopes&) const;
+    void infiltrate(Scopes&) const;
     const thorin::Def* def() const { return def_; }
     //void emit(Emitter&) const;
 
@@ -743,7 +744,7 @@ struct SigmaExpr : public Expr {
 
     Stream& stream(Stream& s) const override;
     void bind(Scopes&) const override;
-    void import(Scopes&) const;
+    void bind_unscoped(Scopes&) const;
     //const thorin::Def* emit(Emitter&) const override;
 
     Ptrs<Binder> elems;

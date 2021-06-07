@@ -26,7 +26,7 @@ void Scopes::insert(const Decl* decl) {
             comp().err(decl->id->loc, "redefinition of '{}'", sym);
             comp().note(i->second->id->loc, "previous declaration of '{}' was here", sym);
         } else {
-            i->second = decl;
+            i->second = decl; // now we have a valid definition
         }
     }
 }
@@ -74,6 +74,15 @@ void Prg::bind(Scopes& s) const {
 
 void Binder::bind(Scopes& s) const {
     type->bind(s);
+    s.insert(this);
+}
+
+void Binder::infiltrate(Scopes& s) const {
+    if (auto sigma = isa<SigmaExpr>(type))
+        sigma->bind_unscoped(s);
+    else
+        type->bind(s);
+
     s.insert(this);
 }
 
@@ -177,20 +186,13 @@ void PkExpr::bind(Scopes& s) const {
 
 void SigmaExpr::bind(Scopes& s) const {
     s.push();
-    for (auto&& elem : elems) {
-        if (auto sigma = isa<SigmaExpr>(elem->type))
-            sigma->import(s);
-        elem->bind(s);
-    }
+    bind_unscoped(s);
     s.pop();
 }
 
-void SigmaExpr::import(Scopes& s) const {
-    for (auto&& elem : elems) {
-        if (auto sigma = isa<SigmaExpr>(elem->type))
-            sigma->import(s);
-        s.insert(elem.get());
-    }
+void SigmaExpr::bind_unscoped(Scopes& s) const {
+    for (auto&& elem : elems)
+        elem->infiltrate(s);
 }
 
 void ArExpr::bind(Scopes& s) const {
