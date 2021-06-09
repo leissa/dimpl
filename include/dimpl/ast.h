@@ -649,9 +649,10 @@ struct PkExpr : public Expr {
 };
 
 struct PiExpr : public Expr {
-    PiExpr(Comp& comp, Loc loc, Tok::Tag tag, Ptr<Binder>&& dom, Ptr<Expr>&& codom)
+    PiExpr(Comp& comp, Loc loc, Tok::Tag tag, Ptrs<Ptrn>&& doms, Ptr<Binder>&& dom, Ptr<Expr>&& codom)
         : Expr(comp, loc, Node)
         , tag(tag)
+        , doms(std::move(doms))
         , dom(std::move(dom))
         , codom(std::move(codom))
     {}
@@ -661,6 +662,7 @@ struct PiExpr : public Expr {
     //const thorin::Def* emit(Emitter&) const override;
 
     Tok::Tag tag;
+    Ptrs<Ptrn> doms;
     Ptr<Binder> dom;
     Ptr<Expr> codom;
     static constexpr auto Node = Node::PiExpr;

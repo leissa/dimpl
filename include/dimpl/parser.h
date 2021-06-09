@@ -44,6 +44,7 @@ public:
     Ptr<Id>     parse_id(const char* ctxt = nullptr);
     Ptr<Expr>   parse_type_ascr(const char* ascr_ctxt = nullptr);
     Ptr<Binder> parse_binder();
+    Ptrs<Ptrn>  parse_doms();
     //@}
 
     /// @name nom

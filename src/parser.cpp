@@ -148,6 +148,13 @@ Ptr<Expr> Parser::parse_type_ascr(const char* ascr_ctxt) {
     return accept(Tok::Tag::P_colon) ? parse_expr("type ascription") : mk_unknown_expr();
 }
 
+Ptrs<Ptrn> Parser::parse_doms() {
+    Ptrs<Ptrn> doms;
+    while (ahead().tag() == Tok::Tag::D_bracket_l)
+        doms.emplace_back(parse_tup_ptrn(Tok::Tag::D_bracket_l, Tok::Tag::D_bracket_r));
+    return doms;
+}
+
 /*
  * nom
  */
@@ -178,15 +185,8 @@ Ptr<AbsNom> Parser::parse_abs_nom() {
     auto track = tracker();
     auto tag = lex().tag();
     auto id = ahead().isa(Tok::Tag::M_id) ? parse_id() : mk_id("_");
-
-    Ptrs<Ptrn> doms;
-    while (ahead().tag() == Tok::Tag::D_bracket_l)
-        doms.emplace_back(parse_tup_ptrn(Tok::Tag::D_bracket_l, Tok::Tag::D_bracket_r));
-
-    Ptr<Ptrn> dom;
-    if (tag != Tok::Tag::B_lam)
-        dom = parse_tup_ptrn(Tok::Tag::D_paren_l, Tok::Tag::D_paren_r, "domain of a function");
-
+    auto doms = parse_doms();
+    auto dom = tag != Tok::Tag::B_lam ? parse_tup_ptrn(Tok::Tag::D_paren_l, Tok::Tag::D_paren_r, "domain of a function") : nullptr;
     auto codom = accept(Tok::Tag::P_arrow) ? parse_expr("codomain of an function") : mk_unknown_expr();
     auto body = parse_expr("body of a function");
     return mk_ptr<AbsNom>(track, tag, std::move(id), std::move(doms), std::move(dom), std::move(codom), std::move(body));
@@ -461,6 +461,7 @@ Ptr<PkExpr> Parser::parse_pk_expr() {
 Ptr<PiExpr> Parser::parse_pi_expr() {
     auto track = tracker();
     auto tag = lex().tag();
+    auto doms = parse_doms();
     auto dom = parse_binder();
 
     Ptr<Expr> codom;
@@ -469,7 +470,7 @@ Ptr<PiExpr> Parser::parse_pi_expr() {
         codom = parse_expr("codomain");
     }
 
-    return mk_ptr<PiExpr>(track, tag, std::move(dom), std::move(codom));
+    return mk_ptr<PiExpr>(track, tag, std::move(doms), std::move(dom), std::move(codom));
 }
 
 Ptr<SigmaExpr> Parser::parse_sigma_expr() {

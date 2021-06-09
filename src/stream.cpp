@@ -31,9 +31,9 @@ Stream& AbsNom::stream(Stream& s) const {
     s.fmt("{} ", tag);
     if (!id->is_anonymous()) id->stream(s);
     s.fmt("{}", doms);
-    if (dom) s.fmt("{} ", dom);
-    if (!comp.fancy || !isa<UnknownExpr>(codom)) s.fmt("→ {} ", codom);
-    s.fmt("{}{}", body, isa<BlockExpr>(body) ? "" : ";");
+    if (dom) s.fmt("{}", dom);
+    if (!comp.fancy || !isa<UnknownExpr>(codom)) s.fmt(" → {} ", codom);
+    s.fmt(" {}{}", body, isa<BlockExpr>(body) ? "" : ";");
     return s;
 }
 
@@ -59,7 +59,7 @@ Stream& IdExpr     ::stream(Stream& s) const { return s.fmt("{}", id); }
 Stream& IfExpr     ::stream(Stream& s) const { return s.fmt("if {} {} else {}", cond, then_expr, else_expr); }
 Stream& InfixExpr  ::stream(Stream& s) const { return s.fmt("({} {} {})", lhs, tag, rhs); }
 Stream& KeyExpr    ::stream(Stream& s) const { return s.fmt("{}", sym); }
-Stream& PiExpr     ::stream(Stream& s) const { return s.fmt("{} {} → {}", tag, dom, codom); }
+Stream& PiExpr     ::stream(Stream& s) const { return s.fmt("{} {}{} → {}", tag, doms, dom, codom); }
 Stream& PkExpr     ::stream(Stream& s) const { return s.fmt("‹{, }; {}›", doms, body); }
 Stream& PostfixExpr::stream(Stream& s) const { return s.fmt("({}{})", lhs, tag); }
 Stream& PrefixExpr ::stream(Stream& s) const { return s.fmt("({}{})", tag, rhs); }
