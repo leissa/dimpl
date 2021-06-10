@@ -1,12 +1,11 @@
 cmake_minimum_required(VERSION 3.4.3 FATAL_ERROR)
-project(dimpl VERSION 0.1 LANGUAGES CXX)
+project(dimpl VERSION 0.1 DESCRIPTION "a Dependently-typed IMPerative Langage")
 
-include(FetchContent)
+option(PACKAGE_TESTS "Build the tests" ON)
 
 set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "limited config" FORCE)
 set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
 set(CMAKE_CXX_STANDARD 20)
-
 set(NUM_THREADS 8 CACHE STRING "Number of threads for building dependencies at configure time.")
 
 # Require out-of-source builds
@@ -21,7 +20,6 @@ configure_file("${PROJECT_SOURCE_DIR}/include/dimpl/version.h.in" "${PROJECT_SOU
 # Update submodules
 find_package(Git QUIET)
 if(GIT_FOUND AND EXISTS "${PROJECT_SOURCE_DIR}/.git")
-# Update submodules as needed
     option(GIT_SUBMODULE "Check submodules during build" ON)
     if(GIT_SUBMODULE)
         message(STATUS "Submodule update")
@@ -56,11 +54,8 @@ if(NOT EXISTS "${PROJECT_SOURCE_DIR}/thorin/build")
 endif()
 find_package(Thorin REQUIRED PATHS ${PROJECT_SOURCE_DIR}/thorin/build/share/anydsl/cmake/)
 
-add_definitions(-fno-rtti)
-
-add_subdirectory(src) # <- libdimpl
-add_subdirectory(app) # <- dimpl binary
-include(CTest)
+add_subdirectory(src)
+add_subdirectory(app)
 if (BUILD_TESTING)
-    add_subdirectory(unit-test) # <- dimpl-unit-test binary
+    add_subdirectory(gtest) # <- dimpl-unit-test binary
 endif()
