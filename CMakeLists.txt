@@ -34,10 +34,10 @@ if(NOT EXISTS "${PROJECT_SOURCE_DIR}/thorin/build")
                     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/thorin"
     )
 endif()
-find_package(Thorin REQUIRED NO_DEFAULT_PATH PATHS ${PROJECT_SOURCE_DIR}/thorin/build/share/anydsl/cmake/)
 
+add_subdirectory(thorin)
 add_subdirectory(src)
 add_subdirectory(app)
-if (BUILD_TESTING)
+if (PACKAGE_TESTS)
     add_subdirectory(gtest) # <- dimpl-unit-test binary
 endif()
