@@ -32,7 +32,7 @@ Stream& AbsNom::stream(Stream& s) const {
     if (!id->is_anonymous()) id->stream(s);
     s.fmt("{}", doms);
     if (dom) s.fmt("{}", dom);
-    if (!comp.fancy || !isa<UnknownExpr>(codom)) s.fmt(" → {} ", codom);
+    if (!comp.fancy || !isa<UnknownExpr>(codom)) s.fmt(" → {}", codom);
     s.fmt(" {}{}", body, isa<BlockExpr>(body) ? "" : ";");
     return s;
 }
@@ -42,8 +42,13 @@ Stream& AbsNom::stream(Stream& s) const {
  */
 
 Stream& IdPtrn   ::stream(Stream& s) const { return s.fmt("{}{}: {}", mut ? "mut " : "", id, type); }
-Stream& TupPtrn  ::stream(Stream& s) const { return s.fmt("{}{, }{}", delim_l, elems, delim_r); }
 Stream& ErrorPtrn::stream(Stream& s) const { return s.fmt("<error pattern>"); }
+
+Stream& TupPtrn::stream(Stream& s) const {
+    if (delim_l == Tok::Tag::K_for)
+        return s.fmt("for {, } in", elems);
+    return s.fmt("{}{, }{}", delim_l, elems, delim_r);
+}
 
 /*
  * Expr
@@ -54,7 +59,7 @@ Stream& ArExpr     ::stream(Stream& s) const { return s.fmt("«{, }; {}»", doms
 Stream& BottomExpr ::stream(Stream& s) const { return s.fmt("⊥"); }
 Stream& ErrorExpr  ::stream(Stream& s) const { return s.fmt("<error expression>"); }
 Stream& FieldExpr  ::stream(Stream& s) const { return s.fmt("{}.{}", lhs, id); }
-Stream& ForExpr    ::stream(Stream& s) const { return s.fmt("for {} in {} {}", ptrn, expr, body); }
+Stream& ForExpr    ::stream(Stream& s) const { return s.fmt("{} {} {}", ptrn, expr, body); }
 Stream& IdExpr     ::stream(Stream& s) const { return s.fmt("{}", id); }
 Stream& IfExpr     ::stream(Stream& s) const { return s.fmt("if {} {} else {}", cond, then_expr, else_expr); }
 Stream& InfixExpr  ::stream(Stream& s) const { return s.fmt("({} {} {})", lhs, tag, rhs); }
