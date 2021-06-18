@@ -6,6 +6,10 @@ namespace dimpl {
 
 using DefArray = thorin::Array<const thorin::Def*>;
 
+/*
+ * Emitter
+ */
+
 const thorin::Def* Emitter::dbg(Loc loc) {
     return world().dbg(loc);
 }
@@ -22,6 +26,17 @@ void Emitter::emit_stmts(const Ptrs<Stmt>& stmts) {
             ++i;
         }
     }
+}
+
+/*
+ * Misc
+ */
+
+void Prg::emit(Emitter& e) const { e.emit_stmts(stmts); }
+
+const thorin::Def* Binder::emit(Emitter& e) const {
+    type->emit(e);
+    return nullptr;
 }
 
 /*
@@ -54,6 +69,7 @@ void AssignStmt::emit(Emitter& e) const {
 
 void LetStmt::emit(Emitter& e) const {
     auto i = init ? init->emit(e) : e.world().bot(e.world().type());
+    i->dump(0);
     ptrn->emit(e, i);
 }
 
@@ -167,12 +183,9 @@ const thorin::Def* PostfixExpr::emit(Emitter& e) const {
     return nullptr;
 }
 
-const thorin::Def* SigmaExpr::emit(Emitter& /*e*/) const {
-#if 0
-    DefArray args(elems.size(), [&](size_t i) { return elems[i]->emit(e); });
-    return e.world().sigma(args, loc);
-#endif
-    return nullptr;
+const thorin::Def* SigmaExpr::emit(Emitter& e) const {
+    DefArray es(elems.size(), [&](size_t i) { return elems[i]->emit(e); });
+    return e.world().sigma(es, e.dbg(loc));
 }
 
 const thorin::Def* TupElem::emit(Emitter& e) const {

@@ -26,6 +26,7 @@ static const auto usage =
 "Options:\n"
 "-h, --help                 produce this help message\n"
 "    --emit-ast             emit AST of dimpl program\n"
+"    --emit-thorin          emit Thorin from dimpl program\n"
 "    --fancy                use fancy output: dimpl's AST dump uses only\n"
 "                           parentheses where necessary\n"
 "-o, --output               specifies the output module name\n"
@@ -88,6 +89,8 @@ int main(int argc, char** argv) {
                 std::cout << usage;
                 return EXIT_SUCCESS;
             } else if (cmp("--emit-ast")) {
+                comp.emit_ast = true;
+            } else if (cmp("--emit-thorin")) {
                 comp.emit_ast = true;
             } else if (cmp("--fancy")) {
                 comp.fancy = true;
@@ -168,12 +171,12 @@ int main(int argc, char** argv) {
             prg->dump();
         }
 
-#if 0
-        Emitter emitter;
-        prg->emit(emitter);
-#endif
+        if (comp.emit_thorin && comp.num_errors() == 0) {
+            Emitter emitter;
+            prg->emit(emitter);
+        }
 
-        return EXIT_SUCCESS;
+        return EXIT_SUCCESS; // TODO deal with errors
     } catch (std::exception const& e) {
         comp.err("dimpl: error: {}", e.what());
         return EXIT_FAILURE;

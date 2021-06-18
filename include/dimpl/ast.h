@@ -198,7 +198,7 @@ struct Prg : public AST {
     static constexpr auto Node = Node::Prg;
 };
 
-struct Binder : public AST , public Decl {
+struct Binder : public AST, public Decl {
     Binder(Comp& comp, Loc loc, Ptr<Id> id, Ptr<Expr> type)
         : AST(comp, loc, Node)
         , Decl(this, std::move(id))
@@ -209,7 +209,7 @@ struct Binder : public AST , public Decl {
     void bind(Scopes&) const;
     void infiltrate(Scopes&) const;
     const thorin::Def* def() const { return def_; }
-    void emit(Emitter&) const;
+    const thorin::Def* emit(Emitter&) const;
 
     Ptr<Expr> type;
     const thorin::Def* def_;

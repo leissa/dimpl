@@ -276,8 +276,9 @@ public:
 
     /// @name options
     //@{
-    bool fancy    = false;
-    bool emit_ast = false;
+    bool fancy       = false;
+    bool emit_ast    = false;
+    bool emit_thorin = false;
     //@}
 
 private:
