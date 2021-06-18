@@ -1,5 +1,6 @@
 add_library(libdimpl
     bind.cpp    
+    emit.cpp
     comp.cpp    
     lexer.cpp   
     parser.cpp  

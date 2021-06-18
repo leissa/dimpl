@@ -63,7 +63,7 @@ Stream& ForExpr    ::stream(Stream& s) const { return s.fmt("{} {} {}", ptrn, ex
 Stream& IdExpr     ::stream(Stream& s) const { return s.fmt("{}", id); }
 Stream& IfExpr     ::stream(Stream& s) const { return s.fmt("if {} {} else {}", cond, then_expr, else_expr); }
 Stream& InfixExpr  ::stream(Stream& s) const { return s.fmt("({} {} {})", lhs, tag, rhs); }
-Stream& KeyExpr    ::stream(Stream& s) const { return s.fmt("{}", sym); }
+Stream& KeyExpr    ::stream(Stream& s) const { return s.fmt("{}", Tok::tag2str(tag)); }
 Stream& PiExpr     ::stream(Stream& s) const { return s.fmt("{} {}{} → {}", tag, doms, dom, codom); }
 Stream& PkExpr     ::stream(Stream& s) const { return s.fmt("‹{, }; {}›", doms, body); }
 Stream& PostfixExpr::stream(Stream& s) const { return s.fmt("({}{})", lhs, tag); }
