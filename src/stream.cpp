@@ -32,9 +32,9 @@ Stream& AbsNom::stream(Stream& s) const {
     if (!id->is_anonymous()) id->stream(s);
     s.fmt("{}", doms);
     if (dom) s.fmt("{}", dom);
-    if (!comp.fancy || !isa<UnknownExpr>(codom)) s.fmt(" → {}", codom);
-    s.fmt(" {}{}", body, isa<BlockExpr>(body) ? "" : ";");
-    return s;
+    if (!comp.fancy || !isa<UnknownExpr>(codom)) s.fmt(" → {} ", codom);
+    auto is_block = isa<BlockExpr>(body);
+    return s.fmt("{}{}{}", is_block ? "" : "= ", body, is_block ? "" : ";");
 }
 
 /*

@@ -188,11 +188,15 @@ Ptr<AbsNom> Parser::parse_abs_nom() {
     auto doms = parse_doms();
     auto dom = tag != Tok::Tag::B_lam ? parse_tup_ptrn(Tok::Tag::D_paren_l, Tok::Tag::D_paren_r, "domain of a function") : nullptr;
     auto codom = accept(Tok::Tag::P_arrow) ? parse_expr("codomain of an function") : mk_unknown_expr();
+    accept(Tok::Tag::A_assign); // optional "="
     auto body = parse_expr("body of a function");
     return mk_ptr<AbsNom>(track, tag, std::move(id), std::move(doms), std::move(dom), std::move(codom), std::move(body));
 }
 
 Ptr<SigNom> Parser::parse_sig_nom() {
+    auto track = tracker();
+    auto tag = lex().tag();
+    auto id = parse_id(Tok::tag2str(tag));
     return nullptr;
 }
 
