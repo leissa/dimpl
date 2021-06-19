@@ -79,33 +79,33 @@ Precedence is dissolved as follows from strongest to lowest:
 
 | Expression  | Desugared           |
 | ----------  | ------------------- |
-| `+e`       | todo    |
-| `-e`       | todo    |
-| `*e`       | todo    |
-| `&e`       | todo    |
+| `+e`        | todo    |
+| `-e`        | todo    |
+| `*e`        | todo    |
+| `&e`        | todo    |
 | `++e`       | todo    |
 | `--e`       | todo    |
 
 ### Infix Expressions
 
-| Assignment | Desugared           |
-| ---------- | ------------------- |
-| `e1  + e2` | `   add(e1, e2)`    |
-| `e1  - e2` | `   sub(e1, e2)`    |
-| `e1  * e2` | `   mul(e1, e2)`    |
-| `e1  / e2` | `   div(e1, e2)`    |
-| `e1  % e2` | `   mod(e1, e2)`    |
-| `e1 >> e2` | `   shr(e1, e2)`    |
-| `e1 << e2` | `   shl(e1, e2)`    |
-| `e1 \| e2` | `bitor (e1, e2)`    |
-| `e1  & e2` | `bitand(e1, e2)`    |
-| `e1  ^ e2` | `bitxor(e1, e2)`    |
-| `e1 == e2` | `    eq(e1, e2)`    |
-| `e1 != e2` | `    ne(e1, e2)`    |
-| `e1 <  e2` | `    lt(e1, e2)`    |
-| `e1 <= e2` | `    le(e1, e2)`    |
-| `e1 >  e2` | `    gt(e1, e2)`    |
-| `e1 >= e2` | `    ge(e1, e2)`    |
+| Assignment | Desugared                            |
+| ---------- | ------------------------------------ |
+| `e1  + e2` | `   Add.typeof[e1]].add(e1, e2)`     |
+| `e1  - e2` | `   Sub[typeof[e1]].sub(e1, e2)`     |
+| `e1  * e2` | `   Mul[typeof[e1]].mul(e1, e2)`     |
+| `e1  / e2` | `   Div[typeof[e1]].div(e1, e2)`     |
+| `e1  % e2` | `   Mod[typeof[e1]].mod(e1, e2)`     |
+| `e1 >> e2` | `   Shr[typeof[e1]].shr(e1, e2)`     |
+| `e1 << e2` | `   Shl[typeof[e1]].shl(e1, e2)`     |
+| `e1 \| e2` | `Bitor [typeof[e1]].bitor (e1, e2)`  |
+| `e1  & e2` | `Bitand[typeof[e1]].bitand(e1, e2)`  |
+| `e1  ^ e2` | `Bitxor[typeof[e1]].bitxor(e1, e2)`  |
+| `e1 == e2` | `    Eq[typeof[e1]].eq(e1, e2)`      |
+| `e1 != e2` | `    Ne[typeof[e1]].ne(e1, e2)`      |
+| `e1 <  e2` | `    Lt[typeof[e1]].lt(e1, e2)`      |
+| `e1 <= e2` | `    Le[typeof[e1]].le(e1, e2)`      |
+| `e1 >  e2` | `    Gt[typeof[e1]].gt(e1, e2)`      |
+| `e1 >= e2` | `    Ge[typeof[e1]].ge(e1, e2)`      |
 
 ### Postfix Expressions
 
