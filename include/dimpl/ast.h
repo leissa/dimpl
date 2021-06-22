@@ -17,11 +17,13 @@ namespace dimpl {
 #define DIMPL_NODE(m) \
     m(Prg)            \
     m(Id)             \
-    m(Binder)         \
     m(NomNom)         \
     m(AbsNom)         \
     m(SigNom)         \
-    m(ErrorPtrn)      \
+    m(ErrBndr)        \
+    m(IdBndr)         \
+    m(SigBndr)        \
+    m(ErrPtrn)        \
     m(IdPtrn)         \
     m(TupPtrn)        \
     m(Stmt)           \
@@ -34,7 +36,7 @@ namespace dimpl {
     m(AppExpr)        \
     m(BlockExpr)      \
     m(BottomExpr)     \
-    m(ErrorExpr)      \
+    m(ErrExpr)        \
     m(FieldExpr)      \
     m(ForExpr)        \
     m(IdExpr)         \
@@ -48,7 +50,7 @@ namespace dimpl {
     m(PostfixExpr)    \
     m(KeyExpr)        \
     m(ArExpr)         \
-    m(SigmaExpr)      \
+    m(SigExpr)        \
     m(UnknownExpr)    \
     m(VarExpr)        \
     m(WhileExpr)
@@ -100,8 +102,7 @@ struct AST : public thorin::Streamable<AST> {
     virtual ~AST() {}
 
     int node() const { return node_; }
-    std::ostream& stream_out(std::ostream&) const;
-    virtual Stream& stream(Stream& s) const = 0;
+    virtual Stream& stream(Stream&) const = 0;
 
     Comp& comp;
     Loc loc;
@@ -121,7 +122,7 @@ struct Id : public AST {
     {}
 
     bool is_anonymous() const { return comp.is_anonymous(sym); }
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
 
     Sym sym;
     static constexpr auto Node = Node::Id;
@@ -154,23 +155,18 @@ struct Use {
     mutable const Decl* decl = nullptr;
 };
 
-struct Expr : public AST {
-    Expr(Comp& comp, Loc loc, int node)
-        : AST(comp, loc, node)
+struct Prg : public AST {
+    Prg(Comp& comp, Loc loc, Ptrs<Stmt>&& stmts)
+        : AST(comp, loc, Node)
+        , stmts(std::move(stmts))
     {}
 
-    virtual bool is_stmt_like() const { return false; }
-    virtual void bind(Scopes&) const = 0;
-    virtual const thorin::Def* emit(Emitter&) const = 0;
-};
+    Stream& stream(Stream&) const override;
+    void bind(Scopes&) const;
+    void emit(Emitter&) const;
 
-struct Ptrn : public AST {
-    Ptrn(Comp& comp, Loc loc, int node)
-        : AST(comp, loc, node)
-    {}
-
-    virtual void bind(Scopes&) const = 0;
-    virtual void emit(Emitter&, const thorin::Def*) const = 0;
+    Ptrs<Stmt> stmts;
+    static constexpr auto Node = Node::Prg;
 };
 
 struct Nom : public AST, public Decl {
@@ -184,36 +180,33 @@ struct Nom : public AST, public Decl {
     virtual void emit(Emitter&) const = 0;
 };
 
-struct Prg : public AST {
-    Prg(Comp& comp, Loc loc, Ptrs<Stmt>&& stmts)
-        : AST(comp, loc, Node)
-        , stmts(std::move(stmts))
+struct Bndr : public AST {
+    Bndr(Comp& comp, Loc loc, int node)
+        : AST(comp, loc, node)
     {}
 
-    Stream& stream(Stream& s) const override;
     void bind(Scopes&) const;
-    void emit(Emitter&) const;
-
-    Ptrs<Stmt> stmts;
-    static constexpr auto Node = Node::Prg;
+    virtual void infiltrate(Scopes&) const = 0;
+    virtual const thorin::Def* emit(Emitter&, const thorin::Def*) const = 0;
 };
 
-struct Binder : public AST, public Decl {
-    Binder(Comp& comp, Loc loc, Ptr<Id> id, Ptr<Expr> type)
-        : AST(comp, loc, Node)
-        , Decl(this, std::move(id))
-        , type(std::move(type))
+struct Ptrn : public AST {
+    Ptrn(Comp& comp, Loc loc, int node)
+        : AST(comp, loc, node)
     {}
 
-    Stream& stream(Stream& s) const override;
-    void bind(Scopes&) const;
-    void infiltrate(Scopes&) const;
-    const thorin::Def* def() const { return def_; }
-    const thorin::Def* emit(Emitter&) const;
+    virtual void bind(Scopes&) const = 0;
+    virtual void emit(Emitter&, const thorin::Def*) const = 0;
+};
 
-    Ptr<Expr> type;
-    const thorin::Def* def_;
-    static constexpr auto Node = Node::Binder;
+struct Expr : public AST {
+    Expr(Comp& comp, Loc loc, int node)
+        : AST(comp, loc, node)
+    {}
+
+    virtual bool is_stmt_like() const { return false; }
+    virtual void bind(Scopes&) const = 0;
+    virtual const thorin::Def* emit(Emitter&) const = 0;
 };
 
 /*
@@ -221,13 +214,13 @@ struct Binder : public AST, public Decl {
  */
 
 struct NomNom : public Nom {
-    NomNom(Comp& comp, Loc loc, Ptr<Id> id, Ptr<Expr> type, Ptr<Expr> body)
+    NomNom(Comp& comp, Loc loc, Ptr<Id>&& id, Ptr<Expr>&& type, Ptr<Expr>&& body)
         : Nom(comp, loc, Node, std::move(id))
         , type(std::move(type))
         , body(std::move(body))
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     void emit_nom(Emitter&) const override;
     void emit(Emitter&) const override;
@@ -238,23 +231,21 @@ struct NomNom : public Nom {
 };
 
 struct AbsNom : public Nom {
-    AbsNom(Comp& comp, Loc loc, Tok::Tag tag, Ptr<Id>&& id, Ptrs<Ptrn>&& doms, Ptr<Ptrn>&& dom, Ptr<Expr>&& codom, Ptr<Expr>&& body)
+    AbsNom(Comp& comp, Loc loc, Tok::Tag tag, Ptr<Id>&& id, Ptrs<Ptrn>&& doms, Ptr<Expr>&& codom, Ptr<Expr>&& body)
         : Nom(comp, loc, Node, std::move(id))
         , tag(tag)
         , doms(std::move(doms))
-        , dom(std::move(dom))
         , codom(std::move(codom))
         , body(std::move(body))
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     void emit_nom(Emitter&) const override;
     void emit(Emitter&) const override;
 
     Tok::Tag tag;
     Ptrs<Ptrn> doms;
-    Ptr<Ptrn> dom;
     Ptr<Expr> codom;
     Ptr<Expr> body;
     static constexpr auto Node = Node::AbsNom;
@@ -265,29 +256,74 @@ struct SigNom : public Nom {
         : Nom(comp, loc, Node, std::move(id))
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     void emit_nom(Emitter&) const override;
     void emit(Emitter&) const override;
 
-    // TODO
     static constexpr auto Node = Node::SigNom;
+};
+
+/*
+ * Bndr
+ */
+
+struct ErrBndr : public Bndr {
+    ErrBndr(Comp& comp, Loc loc)
+        : Bndr(comp, loc, Node)
+    {}
+
+    Stream& stream(Stream&) const override;
+    void infiltrate(Scopes&) const override;
+    const thorin::Def* emit(Emitter&, const thorin::Def*) const override;
+
+    static constexpr auto Node = Node::ErrBndr;
+};
+
+struct IdBndr : public Bndr, public Decl {
+    IdBndr(Comp& comp, Loc loc, Ptr<Id>&& id, Ptr<Expr>&& type)
+        : Bndr(comp, loc, Node)
+        , Decl(this, std::move(id))
+        , type(std::move(type))
+    {}
+
+    Stream& stream(Stream&) const override;
+    void infiltrate(Scopes&) const override;
+    const thorin::Def* emit(Emitter&, const thorin::Def*) const override;
+
+    Ptr<Expr> type;
+    static constexpr auto Node = Node::IdBndr;
+};
+
+struct SigBndr : public Bndr {
+    SigBndr(Comp& comp, Loc loc, Ptrs<Bndr>&& elems)
+        : Bndr(comp, loc, Node)
+          , elems(std::move(elems))
+    {}
+
+    Stream& stream(Stream&) const override;
+    void infiltrate(Scopes&) const override;
+    const thorin::Def* emit(Emitter&, const thorin::Def*) const override;
+
+    Ptrs<Bndr> elems;
+
+    static constexpr auto Node = Node::SigBndr;
 };
 
 /*
  * Ptrn
  */
 
-struct ErrorPtrn : public Ptrn {
-    ErrorPtrn(Comp& comp, Loc loc)
+struct ErrPtrn : public Ptrn {
+    ErrPtrn(Comp& comp, Loc loc)
         : Ptrn(comp, loc, Node)
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     void emit(Emitter&, const thorin::Def*) const override;
 
-    static constexpr auto Node = Node::ErrorPtrn;
+    static constexpr auto Node = Node::ErrPtrn;
 };
 
 struct IdPtrn : public Ptrn, public Decl {
@@ -298,7 +334,7 @@ struct IdPtrn : public Ptrn, public Decl {
         , type(std::move(type))
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     void emit(Emitter&, const thorin::Def*) const override;
 
@@ -308,20 +344,18 @@ struct IdPtrn : public Ptrn, public Decl {
 };
 
 struct TupPtrn : public Ptrn {
-    TupPtrn(Comp& comp, Loc loc, Tok::Tag delim_l, Ptrs<Ptrn>&& elems, Tok::Tag delim_r)
+    TupPtrn(Comp& comp, Loc loc, Ptrs<Ptrn>&& elems, bool delims)
         : Ptrn(comp, loc, Node)
-        , delim_l(delim_l)
         , elems(std::move(elems))
-        , delim_r(delim_r)
+        , delims(delims)
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     void emit(Emitter&, const thorin::Def*) const override;
 
-    Tok::Tag delim_l;
     Ptrs<Ptrn> elems;
-    Tok::Tag delim_r;
+    bool delims;
     static constexpr auto Node = Node::TupPtrn;
 };
 
@@ -346,7 +380,7 @@ struct AssignStmt : public Stmt {
         , rhs(std::move(rhs))
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     void emit(Emitter&) const override;
 
@@ -362,7 +396,7 @@ struct ExprStmt : public Stmt {
         , expr(std::move(expr))
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     void emit(Emitter&) const override;
 
@@ -377,7 +411,7 @@ struct LetStmt : public Stmt {
         , init(std::move(init))
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     void emit(Emitter&) const override;
 
@@ -392,7 +426,7 @@ struct NomStmt : public Stmt {
         , nom(std::move(nom))
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     void emit(Emitter&) const override;
 
@@ -405,12 +439,12 @@ struct NomStmt : public Stmt {
  */
 
 struct AbsExpr : public Expr {
-    AbsExpr(Comp& comp, Ptr<AbsNom>&& abs)
-        : Expr(comp, abs->loc, Node)
+    AbsExpr(Comp& comp, Loc loc, Ptr<AbsNom>&& abs)
+        : Expr(comp, loc, Node)
         , abs(std::move(abs))
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     const thorin::Def* emit(Emitter&) const override;
 
@@ -425,7 +459,7 @@ struct TupElem : public AST {
         , expr(std::move(expr))
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const;
     const thorin::Def* emit(Emitter&) const;
 
@@ -441,7 +475,7 @@ struct TupExpr : public Expr {
         , type(std::move(type))
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     const thorin::Def* emit(Emitter&) const override;
 
@@ -458,7 +492,7 @@ struct AppExpr : public Expr {
         , arg(std::move(arg))
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     const thorin::Def* emit(Emitter&) const override;
 
@@ -476,7 +510,7 @@ struct BlockExpr : public Expr {
     {}
 
     bool is_stmt_like() const override { return true; }
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     const thorin::Def* emit(Emitter&) const override;
 
@@ -490,23 +524,23 @@ struct BottomExpr : public Expr {
         : Expr(comp, loc, Node)
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     const thorin::Def* emit(Emitter&) const override;
 
     static constexpr auto Node = Node::BottomExpr;
 };
 
-struct ErrorExpr : public Expr {
-    ErrorExpr(Comp& comp, Loc loc)
+struct ErrExpr : public Expr {
+    ErrExpr(Comp& comp, Loc loc)
         : Expr(comp, loc, Node)
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     const thorin::Def* emit(Emitter&) const override;
 
-    static constexpr auto Node = Node::ErrorExpr;
+    static constexpr auto Node = Node::ErrExpr;
 };
 
 struct FieldExpr : public Expr {
@@ -516,7 +550,7 @@ struct FieldExpr : public Expr {
         , id(std::move(id))
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     const thorin::Def* emit(Emitter&) const override;
 
@@ -534,7 +568,7 @@ struct ForExpr : public Expr {
     {}
 
     bool is_stmt_like() const override { return true; }
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     const thorin::Def* emit(Emitter&) const override;
 
@@ -550,7 +584,7 @@ struct IdExpr : public Expr, public Use {
         , Use(this, std::move(id))
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     const thorin::Def* emit(Emitter&) const override;
 
@@ -566,7 +600,7 @@ struct IfExpr : public Expr {
     {}
 
     bool is_stmt_like() const override { return true; }
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     const thorin::Def* emit(Emitter&) const override;
 
@@ -584,7 +618,7 @@ struct InfixExpr : public Expr {
         , rhs(std::move(rhs))
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     const thorin::Def* emit(Emitter&) const override;
 
@@ -611,7 +645,7 @@ struct LitExpr : public Expr {
     thorin::s64 s() const { assert(tag == Tok::Tag::L_s ); return s_; }
     thorin::u64 u() const { assert(tag == Tok::Tag::L_u ); return u_; }
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     const thorin::Def* emit(Emitter&) const override;
 
@@ -626,7 +660,7 @@ struct LitExpr : public Expr {
 
 struct MatchExpr : public Expr {
     bool is_stmt_like() const override { return true; }
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     const thorin::Def* emit(Emitter&) const override;
 
@@ -634,37 +668,35 @@ struct MatchExpr : public Expr {
 };
 
 struct PkExpr : public Expr {
-    PkExpr(Comp& comp, Loc loc, Ptrs<Binder>&& doms, Ptr<Expr>&& body)
+    PkExpr(Comp& comp, Loc loc, Ptrs<Bndr>&& dims, Ptr<Expr>&& body)
         : Expr(comp, loc, Node)
-        , doms(std::move(doms))
+        , dims(std::move(dims))
         , body(std::move(body))
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     const thorin::Def* emit(Emitter&) const override;
 
-    Ptrs<Binder> doms;
+    Ptrs<Bndr> dims;
     Ptr<Expr> body;
     static constexpr auto Node = Node::PkExpr;
 };
 
 struct PiExpr : public Expr {
-    PiExpr(Comp& comp, Loc loc, Tok::Tag tag, Ptrs<Ptrn>&& doms, Ptr<Binder>&& dom, Ptr<Expr>&& codom)
+    PiExpr(Comp& comp, Loc loc, Tok::Tag tag, Ptrs<Bndr>&& doms, Ptr<Expr>&& codom)
         : Expr(comp, loc, Node)
         , tag(tag)
         , doms(std::move(doms))
-        , dom(std::move(dom))
         , codom(std::move(codom))
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     const thorin::Def* emit(Emitter&) const override;
 
     Tok::Tag tag;
-    Ptrs<Ptrn> doms;
-    Ptr<Binder> dom;
+    Ptrs<Bndr> doms;
     Ptr<Expr> codom;
     static constexpr auto Node = Node::PiExpr;
 };
@@ -676,7 +708,7 @@ struct PrefixExpr : public Expr {
         , rhs(std::move(rhs))
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     const thorin::Def* emit(Emitter&) const override;
 
@@ -692,7 +724,7 @@ struct PostfixExpr : public Expr {
         , tag(tag)
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     const thorin::Def* emit(Emitter&) const override;
 
@@ -707,7 +739,7 @@ struct KeyExpr : public Expr {
         , tag(tok.tag())
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     const thorin::Def* emit(Emitter&) const override;
 
@@ -716,34 +748,33 @@ struct KeyExpr : public Expr {
 };
 
 struct ArExpr : public Expr {
-    ArExpr(Comp& comp, Loc loc, Ptrs<Binder>&& doms, Ptr<Expr>&& body)
+    ArExpr(Comp& comp, Loc loc, Ptrs<Bndr>&& dims, Ptr<Expr>&& body)
         : Expr(comp, loc, Node)
-        , doms(std::move(doms))
+        , dims(std::move(dims))
         , body(std::move(body))
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     const thorin::Def* emit(Emitter&) const override;
 
-    Ptrs<Binder> doms;
+    Ptrs<Bndr> dims;
     Ptr<Expr> body;
     static constexpr auto Node = Node::ArExpr;
 };
 
-struct SigmaExpr : public Expr {
-    SigmaExpr(Comp& comp, Loc loc, Ptrs<Binder>&& elems)
+struct SigExpr : public Expr {
+    SigExpr(Comp& comp, Loc loc, Ptrs<Bndr>&& elems)
         : Expr(comp, loc, Node)
         , elems(std::move(elems))
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
-    void bind_unscoped(Scopes&) const;
     const thorin::Def* emit(Emitter&) const override;
 
-    Ptrs<Binder> elems;
-    static constexpr auto Node = Node::SigmaExpr;
+    Ptrs<Bndr> elems;
+    static constexpr auto Node = Node::SigExpr;
 };
 
 struct UnknownExpr : public Expr {
@@ -751,7 +782,7 @@ struct UnknownExpr : public Expr {
         : Expr(comp, loc, Node)
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     const thorin::Def* emit(Emitter&) const override;
 
@@ -764,7 +795,7 @@ struct VarExpr : public Expr, public Use {
         , Use(this, std::move(id))
     {}
 
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     const thorin::Def* emit(Emitter&) const override;
 
@@ -772,14 +803,14 @@ struct VarExpr : public Expr, public Use {
 };
 
 struct WhileExpr : public Expr {
-    WhileExpr(Comp& comp, Loc loc, Ptr<Expr>&& cond, Ptr<BlockExpr> body)
+    WhileExpr(Comp& comp, Loc loc, Ptr<Expr>&& cond, Ptr<BlockExpr>&& body)
         : Expr(comp, loc, Node)
         , cond(std::move(cond))
         , body(std::move(body))
     {}
 
     bool is_stmt_like() const override { return true; }
-    Stream& stream(Stream& s) const override;
+    Stream& stream(Stream&) const override;
     void bind(Scopes&) const override;
     const thorin::Def* emit(Emitter&) const override;
 

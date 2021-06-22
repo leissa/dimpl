@@ -72,19 +72,16 @@ void Prg::bind(Scopes& s) const {
     s.pop();
 }
 
-void Binder::bind(Scopes& s) const {
-    type->bind(s);
-    s.insert(this);
-}
-
-void Binder::infiltrate(Scopes& s) const {
-    if (auto sigma = isa<SigmaExpr>(type))
+/*
+void Bndr::infiltrate(Scopes& s) const {
+    if (auto sigma = isa<SigExpr>(type))
         sigma->bind_unscoped(s);
     else
         type->bind(s);
 
     s.insert(this);
 }
+*/
 
 /*
  * Nom
@@ -99,44 +96,63 @@ void AbsNom::bind(Scopes& s) const {
     s.push();
     s.insert(this);
     for (auto&& dom : doms) dom->bind(s);
-    body ->bind(s);
     codom->bind(s);
+    body->bind(s);
     s.pop();
+}
+
+/*
+ * Bndr
+ */
+
+void Bndr::bind(Scopes& s) const {
+    s.push();
+    infiltrate(s);
+    s.pop();
+}
+
+void ErrBndr::infiltrate(Scopes&) const {}
+
+void IdBndr::infiltrate(Scopes& s) const {
+    type->bind(s);
+    s.insert(this);
+}
+
+void SigBndr::infiltrate(Scopes& s) const {
+    for (auto&& elem : elems) elem->infiltrate(s);
 }
 
 /*
  * Ptrn
  */
 
+void ErrPtrn::bind(Scopes&) const {}
+
 void IdPtrn::bind(Scopes& s) const {
-    s.insert(this);
     type->bind(s);
+    s.insert(this);
 }
 
 void TupPtrn::bind(Scopes& s) const {
     for (auto&& elem : elems) elem->bind(s);
 }
 
-void ErrorPtrn::bind(Scopes&) const {}
-
 /*
  * Expr
  */
 
-void IdExpr ::bind(Scopes& s) const { s.use(this); }
-void VarExpr::bind(Scopes& s) const { s.use(this); }
-
 void BottomExpr ::bind(Scopes&  ) const {}
-void ErrorExpr  ::bind(Scopes&  ) const {}
+void ErrExpr    ::bind(Scopes&  ) const {}
 void KeyExpr    ::bind(Scopes&  ) const {}
 void LitExpr    ::bind(Scopes&  ) const {}
 void UnknownExpr::bind(Scopes&  ) const {}
+void IdExpr     ::bind(Scopes& s) const { s.use(this); }
+void VarExpr    ::bind(Scopes& s) const { s.use(this); }
 void AbsExpr    ::bind(Scopes& s) const { abs->bind(s); }
 void FieldExpr  ::bind(Scopes& s) const { lhs->bind(s); }
 void PostfixExpr::bind(Scopes& s) const { lhs->bind(s); }
 void PrefixExpr ::bind(Scopes& s) const { rhs->bind(s); }
 void TupElem    ::bind(Scopes& s) const { expr->bind(s); }
-
 
 void AppExpr::bind(Scopes& s) const {
     callee->bind(s);
@@ -152,7 +168,7 @@ void BlockExpr::bind(Scopes& s) const {
 
 void PiExpr::bind(Scopes& s) const {
     s.push();
-    dom->infiltrate(s);
+    for (auto&& dom : doms) dom->infiltrate(s);
     codom->bind(s);
     s.pop();
 }
@@ -179,22 +195,18 @@ void TupExpr::bind(Scopes& s) const {
 }
 
 void PkExpr::bind(Scopes& s) const {
-    for (auto&& dom : doms) dom->bind(s);
+    for (auto&& dim : dims) dim->bind(s);
     body->bind(s);
 }
 
-void SigmaExpr::bind(Scopes& s) const {
+void SigExpr::bind(Scopes& s) const {
     s.push();
-    bind_unscoped(s);
+    for (auto&& elem : elems) elem->infiltrate(s);
     s.pop();
 }
 
-void SigmaExpr::bind_unscoped(Scopes& s) const {
-    for (auto&& elem : elems) elem->infiltrate(s);
-}
-
 void ArExpr::bind(Scopes& s) const {
-    for (auto&& dom : doms) dom->bind(s);
+    for (auto&& dim : dims) dim->bind(s);
     body->bind(s);
 }
 

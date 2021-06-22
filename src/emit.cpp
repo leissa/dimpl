@@ -34,11 +34,6 @@ void Emitter::emit_stmts(const Ptrs<Stmt>& stmts) {
 
 void Prg::emit(Emitter& e) const { e.emit_stmts(stmts); }
 
-const thorin::Def* Binder::emit(Emitter& e) const {
-    type->emit(e);
-    return nullptr;
-}
-
 /*
  * Nom
  */
@@ -54,6 +49,38 @@ void AbsNom::emit(Emitter& /*e*/) const {
 
 void NomNom::emit(Emitter& /*e*/) const {
 }
+
+/*
+ * Bndr
+ */
+
+const thorin::Def* ErrBndr::emit(Emitter&, const thorin::Def*) const { THORIN_UNREACHABLE; }
+
+const thorin::Def* IdBndr::emit(Emitter& e, const thorin::Def* d) const {
+    def = d;
+    type->emit(e);
+    return d;
+}
+
+const thorin::Def* SigBndr::emit(Emitter&, const thorin::Def*) const {
+    return nullptr;
+}
+
+/*
+ * Ptrn
+ */
+
+void IdPtrn::emit(Emitter&, const thorin::Def* d) const {
+    def = d;
+}
+
+void TupPtrn::emit(Emitter& e, const thorin::Def* def) const {
+    size_t n = elems.size();
+    for (size_t i = 0; i != n; ++i)
+        elems[i]->emit(e, e.world().extract(def, n, i, e.dbg(elems[i]->loc)));
+}
+
+void ErrPtrn::emit(Emitter&, const thorin::Def*) const {}
 
 /*
  * Stmt
@@ -72,22 +99,6 @@ void LetStmt::emit(Emitter& e) const {
     i->dump(0);
     ptrn->emit(e, i);
 }
-
-/*
- * Ptrn
- */
-
-void IdPtrn::emit(Emitter&, const thorin::Def* d) const {
-    def = d;
-}
-
-void TupPtrn::emit(Emitter& e, const thorin::Def* def) const {
-    size_t n = elems.size();
-    for (size_t i = 0; i != n; ++i)
-        elems[i]->emit(e, e.world().extract(def, n, i, e.dbg(elems[i]->loc)));
-}
-
-void ErrorPtrn::emit(Emitter&, const thorin::Def*) const {}
 
 /*
  * Expr
@@ -120,7 +131,7 @@ const thorin::Def* BottomExpr::emit(Emitter&) const {
     return nullptr;
 }
 
-const thorin::Def* ErrorExpr::emit(Emitter& e) const {
+const thorin::Def* ErrExpr::emit(Emitter& e) const {
     return e.world().bot(e.world().type());
 }
 
@@ -183,9 +194,13 @@ const thorin::Def* PostfixExpr::emit(Emitter& e) const {
     return nullptr;
 }
 
-const thorin::Def* SigmaExpr::emit(Emitter& e) const {
-    DefArray es(elems.size(), [&](size_t i) { return elems[i]->emit(e); });
+const thorin::Def* SigExpr::emit(Emitter& /*e*/) const {
+#if 0
+    size_t n = elems.size();
+    DefArray es(n, [&](size_t i) { return elems[i]->emit(e, s->var(n, i, dbg(...)); });
     return e.world().sigma(es, e.dbg(loc));
+#endif
+    return nullptr;
 }
 
 const thorin::Def* TupElem::emit(Emitter& e) const {

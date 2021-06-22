@@ -32,15 +32,6 @@ syn match       dimplType          '->'
 syn match       dimplType          '«'
 syn match       dimplType          '»'
 
-iabbrev ->  →
-iabbrev LAM   λ
-iabbrev PI    ∀
-iabbrev \/    ∀
-iabbrev ar( «
-iabbrev ar) »
-iabbrev pk( ‹
-iabbrev pk) ›
-
 let b:current_syntax = "dimpl"
 
 hi def link dimplConditional   Conditional
@@ -60,3 +51,12 @@ hi def link dimplBlockComment  Comment
 hi def link dimplString        String
 hi def link dimplTodo          Todo
 hi def link dimplIdentifier    Identifier
+
+iabbr TO  →
+iabbr ->  →
+iabbr LAM λ
+iabbr ALL ∀
+iabbr AL  «
+iabbr AR  »
+iabbr PL  ‹
+iabbr PR  ›

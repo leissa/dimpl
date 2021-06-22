@@ -4,7 +4,7 @@
 
 namespace dimpl {
 
-#define Tok__Tag__Assign Tok::Tag::A_assign:    \
+#define Tok__Tag__Assign Tok::Tag::A_assign:     \
                     case Tok::Tag::A_add_assign: \
                     case Tok::Tag::A_sub_assign: \
                     case Tok::Tag::A_mul_assign: \
@@ -124,21 +124,6 @@ Ptr<Id> Parser::parse_id(const char* ctxt) {
     return mk_ptr<Id>(tok_id(prev_, "<error>"));
 }
 
-Ptr<Binder> Parser::parse_binder() {
-    auto track = tracker();
-
-    Ptr<Id> id;
-    if (ahead(0).isa(Tok::Tag::M_id) && ahead(1).isa(Tok::Tag::P_colon)) {
-        id = parse_id();
-        eat(Tok::Tag::P_colon);
-    } else {
-        id = mk_id("_");
-    }
-
-    auto type = parse_expr("type of a binder");
-    return mk_ptr<Binder>(track, std::move(id), std::move(type));
-}
-
 Ptr<Expr> Parser::parse_type_ascr(const char* ascr_ctxt) {
     if (ascr_ctxt) {
         expect(Tok::Tag::P_colon, ascr_ctxt);
@@ -146,13 +131,6 @@ Ptr<Expr> Parser::parse_type_ascr(const char* ascr_ctxt) {
     }
 
     return accept(Tok::Tag::P_colon) ? parse_expr("type ascription") : mk_unknown_expr();
-}
-
-Ptrs<Ptrn> Parser::parse_doms() {
-    Ptrs<Ptrn> doms;
-    while (ahead().tag() == Tok::Tag::D_bracket_l)
-        doms.emplace_back(parse_tup_ptrn(Tok::Tag::D_bracket_l, Tok::Tag::D_bracket_r));
-    return doms;
 }
 
 /*
@@ -185,19 +163,61 @@ Ptr<AbsNom> Parser::parse_abs_nom() {
     auto track = tracker();
     auto tag = lex().tag();
     auto id = ahead().isa(Tok::Tag::M_id) ? parse_id() : mk_id("_");
-    auto doms = parse_doms();
-    auto dom = tag != Tok::Tag::B_lam ? parse_tup_ptrn(Tok::Tag::D_paren_l, Tok::Tag::D_paren_r, "domain of a function") : nullptr;
+
+    Ptrs<Ptrn> doms;
+    while (ahead().tag() == Tok::Tag::D_paren_l)
+        doms.emplace_back(parse_tup_ptrn(Tok::Tag::D_paren_l, Tok::Tag::D_paren_r));
+
     auto codom = accept(Tok::Tag::P_arrow) ? parse_expr("codomain of an function") : mk_unknown_expr();
-    accept(Tok::Tag::A_assign); // optional "="
-    auto body = parse_expr("body of a function");
-    return mk_ptr<AbsNom>(track, tag, std::move(id), std::move(doms), std::move(dom), std::move(codom), std::move(body));
+    auto body = accept(Tok::Tag::A_assign) ? parse_expr("body of a function") : parse_block_expr("body of a function");
+    return mk_ptr<AbsNom>(track, tag, std::move(id), std::move(doms), std::move(codom), std::move(body));
 }
 
 Ptr<SigNom> Parser::parse_sig_nom() {
+#if 0
     auto track = tracker();
     auto tag = lex().tag();
     auto id = parse_id(Tok::tag2str(tag));
+#endif
     return nullptr;
+}
+
+/*
+ * Bndr
+ */
+
+Ptr<Bndr> Parser::parse_bndr(const char* ctxt) {
+    switch (ahead().tag()) {
+        case Tok::Tag::M_id:        return parse_id_bndr();
+        case Tok::Tag::D_bracket_l: return parse_sig_bndr();
+        default:
+            assert(ctxt);
+            err("pattern", ctxt);
+            return mk_ptr<ErrBndr>(prev_);
+    }
+}
+
+Ptr<IdBndr> Parser::parse_id_bndr() {
+    auto track = tracker();
+
+    Ptr<Id> id;
+    if (ahead(0).isa(Tok::Tag::M_id) && ahead(1).isa(Tok::Tag::P_colon)) {
+        id = parse_id();
+        eat(Tok::Tag::P_colon);
+    } else {
+        id = mk_id("_");
+    }
+
+    auto type = parse_expr("type of an identifier binder");
+    return mk_ptr<IdBndr>(track, std::move(id), std::move(type));
+}
+
+Ptr<SigBndr> Parser::parse_sig_bndr() {
+    auto track = tracker();
+
+    auto elems = parse_list("closing delimiter of a sigma binder", Tok::Tag::D_bracket_l, Tok::Tag::D_bracket_r,
+                            [&]{ return parse_bndr("element of a sigma binder"); });
+    return mk_ptr<SigBndr>(track, std::move(elems));
 }
 
 /*
@@ -212,7 +232,7 @@ Ptr<Ptrn> Parser::parse_ptrn(const char* ctxt) {
         default:
             assert(ctxt);
             err("pattern", ctxt);
-            return mk_ptr<ErrorPtrn>(prev_);
+            return mk_ptr<ErrPtrn>(prev_);
     }
 }
 
@@ -220,21 +240,22 @@ Ptr<IdPtrn> Parser::parse_id_ptrn() {
     auto track = tracker();
     bool mut = accept(Tok::Tag::K_mut);
     auto id = parse_id();
-    Ptr<Expr> type = accept(Tok::Tag::P_colon)
-        ? parse_expr("type ascription of an identifier pattern")
-        : mk_unknown_expr();
+    auto type = accept(Tok::Tag::P_colon)
+              ? parse_expr("type ascription of an identifier pattern")
+              : mk_unknown_expr();
     return mk_ptr<IdPtrn>(track, mut, std::move(id), std::move(type));
 }
 
 Ptr<TupPtrn> Parser::parse_tup_ptrn(Tok::Tag delim_l, Tok::Tag delim_r, const char* ctxt) {
     if (ctxt && !ahead().isa(delim_l)) {
         err("tuple pattern", ctxt);
-        return mk_ptr<TupPtrn>(prev_, delim_l, mk_ptrs<Ptrn>(), delim_r);
+        return mk_ptr<TupPtrn>(prev_, mk_ptrs<Ptrn>(), delim_l == Tok::Tag::D_paren_l);
     }
 
     auto track = tracker();
-    auto ptrns = parse_list("closing delimiter of a tuple pattern", delim_l, delim_r, [&]{ return parse_ptrn("sub-pattern of a tuple pattern"); });
-    return mk_ptr<TupPtrn>(track, delim_l, std::move(ptrns), delim_r);
+    auto ptrns = parse_list("closing delimiter of a tuple pattern", delim_l, delim_r,
+                            [&]{ return parse_ptrn("element of a tuple pattern"); });
+    return mk_ptr<TupPtrn>(track, std::move(ptrns), delim_l == Tok::Tag::D_paren_l);
 }
 
 /*
@@ -324,7 +345,7 @@ Ptr<Expr> Parser::parse_primary_expr(const char* ctxt) {
         case Tok::Tag::D_quote_l:
         case Tok::Tag::K_ar:        return parse_ar_expr();
         case Tok::Tag::D_brace_l:   return parse_block_expr();
-        case Tok::Tag::D_bracket_l: return parse_sigma_expr();
+        case Tok::Tag::D_bracket_l: return parse_sig_expr();
         case Tok::Tag::D_paren_l:   return parse_tup_expr();
         case Tok::Tag::K_for:       return parse_for_expr();
         case Tok::Tag::K_if:        return parse_if_expr();
@@ -343,7 +364,26 @@ Ptr<Expr> Parser::parse_primary_expr(const char* ctxt) {
 }
 
 Ptr<AbsExpr> Parser::parse_abs_expr() {
-    return mk_ptr<AbsExpr>(parse_abs_nom());
+    auto track = tracker();
+    auto tag = lex().tag();
+    auto id = mk_id("_");
+    auto is_delim_r = [&]() { return ahead().isa(Tok::Tag::A_assign) || ahead().isa(Tok::Tag::D_brace_l); };
+
+    auto p_track = tracker();
+    Ptrs<Ptrn> elems;
+    if (!is_delim_r()) {
+        do {
+            elems.emplace_back(parse_ptrn("domain of a function"));
+        } while (accept(Tok::Tag::P_comma) && !is_delim_r());
+    }
+
+    Ptrs<Ptrn> doms;
+    doms.emplace_back(mk_ptr<TupPtrn>(p_track, std::move(elems), false));
+
+    auto codom = accept(Tok::Tag::P_arrow) ? parse_expr("codomain of an function") : mk_unknown_expr();
+    auto body = accept(Tok::Tag::A_assign) ? parse_expr("body of a function") : parse_block_expr("body of a function");
+    auto abs_nom = mk_ptr<AbsNom>(track, tag, std::move(id), std::move(doms), std::move(codom), std::move(body));
+    return mk_ptr<AbsExpr>(track, std::move(abs_nom));
 }
 
 Ptr<BlockExpr> Parser::parse_block_expr(const char* ctxt) {
@@ -454,33 +494,36 @@ Ptr<PkExpr> Parser::parse_pk_expr() {
         expect(Tok::Tag::D_paren_l, "opening delimiter of a pack");
     }
 
-    auto doms = parse_list(Tok::Tag::P_semicolon, [&]{ return parse_binder(); });
+    auto dims = parse_list(Tok::Tag::P_semicolon, [&]{ return parse_bndr("dimensions of a pack"); });
     expect(Tok::Tag::P_semicolon, "pack");
     auto body = parse_expr("body of a pack");
     expect(angle ? Tok::Tag::D_angle_r : Tok::Tag::D_paren_r, "closing delimiter of a pack");
 
-    return mk_ptr<PkExpr>(track, std::move(doms), std::move(body));
+    return mk_ptr<PkExpr>(track, std::move(dims), std::move(body));
 }
 
 Ptr<PiExpr> Parser::parse_pi_expr() {
     auto track = tracker();
     auto tag = lex().tag();
-    auto doms = parse_doms();
-    auto dom = parse_binder();
+
+    Ptrs<Bndr> doms;
+    while (ahead().tag() == Tok::Tag::D_bracket_l)
+        doms.emplace_back(parse_sig_bndr());
 
     Ptr<Expr> codom;
     if (tag != Tok::Tag::K_Cn) {
-        expect(Tok::Tag::P_arrow, "for-all type");
+        expect(Tok::Tag::P_arrow, Tok::tag2str(tag));
         codom = parse_expr("codomain");
     }
 
-    return mk_ptr<PiExpr>(track, tag, std::move(doms), std::move(dom), std::move(codom));
+    return mk_ptr<PiExpr>(track, tag, std::move(doms), std::move(codom));
 }
 
-Ptr<SigmaExpr> Parser::parse_sigma_expr() {
+Ptr<SigExpr> Parser::parse_sig_expr() {
     auto track = tracker();
-    auto elems = parse_list("sigma", Tok::Tag::D_bracket_l, Tok::Tag::D_bracket_r, [&]{ return parse_binder(); });
-    return mk_ptr<SigmaExpr>(track, std::move(elems));
+    auto elems = parse_list("closing delimiter of a sigma expression", Tok::Tag::D_bracket_l, Tok::Tag::D_bracket_r,
+                            [&]{ return parse_bndr("binder element of a sigma expression"); });
+    return mk_ptr<SigExpr>(track, std::move(elems));
 }
 
 Ptr<TupExpr> Parser::parse_tup_expr(Tok::Tag delim_l) {
@@ -511,12 +554,12 @@ Ptr<ArExpr> Parser::parse_ar_expr() {
         expect(Tok::Tag::D_bracket_l, "opening delimiter of an array");
     }
 
-    auto doms = parse_list(Tok::Tag::P_semicolon, [&]{ return parse_binder(); });
+    auto dims = parse_list(Tok::Tag::P_semicolon, [&]{ return parse_bndr("dimensions of an array"); });
     expect(Tok::Tag::P_semicolon, "array");
     auto body = parse_expr("body of an array");
     expect(quote ? Tok::Tag::D_quote_r : Tok::Tag::D_bracket_r, "closing delimiter of an array");
 
-    return mk_ptr<ArExpr>(track, std::move(doms), std::move(body));
+    return mk_ptr<ArExpr>(track, std::move(dims), std::move(body));
 }
 
 Ptr<VarExpr> Parser::parse_var_expr() {

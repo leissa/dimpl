@@ -43,7 +43,6 @@ public:
     Ptr<Prg>    parse_prg();
     Ptr<Id>     parse_id(const char* ctxt = nullptr);
     Ptr<Expr>   parse_type_ascr(const char* ascr_ctxt = nullptr);
-    Ptr<Binder> parse_binder();
     Ptrs<Ptrn>  parse_doms();
     //@}
 
@@ -55,10 +54,17 @@ public:
     Ptr<SigNom> parse_sig_nom();
     //@}
 
+    /// @name bndr
+    //@{
+    Ptr<Bndr>    parse_bndr(const char* ctxt = nullptr);
+    Ptr<IdBndr>  parse_id_bndr();
+    Ptr<SigBndr> parse_sig_bndr();
+    //@}
+
     /// @name Ptrn%s
     //@{
     ///other
-    Ptr<Ptrn>    parse_ptrn(const char* ctxt);
+    Ptr<Ptrn>    parse_ptrn(const char* ctxt = nullptr);
     Ptr<IdPtrn>  parse_id_ptrn();
     Ptr<TupPtrn> parse_tup_ptrn(Tok::Tag delim_l, Tok::Tag delim_r, const char* ctxt = nullptr);
     //@}
@@ -87,7 +93,7 @@ public:
     Ptr<MatchExpr>  parse_match_expr();
     Ptr<PiExpr>     parse_pi_expr();
     Ptr<PkExpr>     parse_pk_expr();
-    Ptr<SigmaExpr>  parse_sigma_expr();
+    Ptr<SigExpr>    parse_sig_expr();
     Ptr<TupExpr>    parse_tup_expr(Tok::Tag delim_l = Tok::Tag::D_paren_l);
     Ptr<VarExpr>    parse_var_expr();
     Ptr<WhileExpr>  parse_while_expr();
@@ -103,8 +109,8 @@ private:
     /// @name make AST nodes
     //@{
     Ptr<BlockExpr>    mk_empty_block_expr() { return mk_ptr<BlockExpr>  (prev_, Ptrs<Stmt>{}, mk_unit_tup()); }
-    Ptr<ErrorExpr>    mk_error_expr()       { return mk_ptr<ErrorExpr>  (prev_); }
-    Ptr<TupExpr>      mk_unit_tup()         { return mk_ptr<TupExpr>  (prev_, Ptrs<TupElem>{}, mk_unknown_expr()); }
+    Ptr<ErrExpr>      mk_error_expr()       { return mk_ptr<ErrExpr>    (prev_); }
+    Ptr<TupExpr>      mk_unit_tup()         { return mk_ptr<TupExpr>    (prev_, Ptrs<TupElem>{}, mk_unknown_expr()); }
     Ptr<UnknownExpr>  mk_unknown_expr()     { return mk_ptr<UnknownExpr>(prev_); }
 
     template<class T, class... Args>
