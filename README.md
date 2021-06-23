@@ -13,27 +13,32 @@ cmake --build build -j $(nproc)
 ## Syntax
 
 ```ebnf
-(* patterns *)
-p = ["mut"] ID [":" e]                                  (* id pattern *)
-  | "(" p "," ... "," p ")"                             (* tuple pattern *)
-  ;
-
 (* binders *)
 b = [ID ":"] e                                          (* id binder *)
   | "[" b "," ... "," b "]"                             (* sigma binder *)
   ;
 
-A = "[" p "," ... "," p "]" | (* nothing *);            (* optional inline abstraction *)
-b = [ID ":"] e;                                         (* binder *)
-B = "{" s ... s [ e ] "}";                              (* block expression *)
+(* patterns *)
+p = ["mut"] ID [":" e]                                  (* id pattern *)
+  | T                                                   (* tuple pattern *)
+  ;
+
+T = "(" p "," ... "," p ")";                            (* tuple pattern *)
 
 (* nominals *)
-n = "nom" ID ":" e "=" e                                (* nom *)
-  | "struct" ID A "=" e                                 (* struct *)
-  | "trait"  ID A "=" e                                 (* trait *)
-  | "\"  ID A p ["->" e] e                              (* fn nom *)
-  | "fn" ID A p ["->" e] e                              (* fn nom *)
-  | "cn" ID A p          e                              (* cn nom *)
+n = "nom" ID ":" e "=" e                                (* nom nominal *)
+  | "struct" ID T* "=" e                                (* struct *)
+  | "trait"  ID T* "=" e                                (* trait *)
+  | "λ"  ID T* ["->" e] ("=" e | B)                     (* λ  nominal *)
+  | "fn" ID T* ["->" e] ("=" e | B)                     (* fn nominal *)
+  | "cn" ID T*          ("=" e | B)                     (* cn nominal *)
+  ;
+
+(* statements *)
+s = n                                                   (* nominal statement *)
+  | "let" p "=" e ";"                                   (* let statement *)
+  | e A_OP e ";"                                        (* assignment statement *)
+  | e ";"                                               (* expression statement *)
   ;
 
 (* expressions *)
@@ -43,18 +48,16 @@ e = ID
   | e POST_OP                                           (* postix expression *)
   | "[" b "," ... "," b "]"                             (* sigma *)
   | "(" [ID "="] e "," ... "," [ID "="] e")" [":" e]    (* tuple *)
-  | e "." ID                                            (* field  *)
-  | "ar" "[" p "," ... "," p ";" e "]"                  (* array *)
-  |      "«" p "," ... "," p ";" e "»"                  (* array (quote-style) *)
-  | "pk" "(" p "," ... "," p ";" e ")"                  (* pack *)
-  |      "‹" p "," ... "," p ";" e "›"                  (* pack (angle-style) *)
+  | e "." ID                                            (* field *)
+  | "«" p "," ... "," p ";" e "»"                       (* array *)
+  | "‹" p "," ... "," p ";" e "›"                       (* pack *)
   | "∀"  b "->" e                                       (* ∀  *)
   | "Fn" b "->" e                                       (* Fn *)
   | "Cn" b                                              (* Cn *)
-  | "λ"  p "," ... "," ["->" e] e                       (* λ  abstraction *)
-  | "fn" p "," ... "," ["->" e] e                       (* fn abstraction *)
-  | "cn" p "," ... ","          e                       (* cn abstraction *)
-  | e  "[" e "]"                                        (* ds application *)
+  | "λ"  p "," ... "," p ["->" e] ("=" e | B)           (* λ  *)
+  | "fn" p "," ... "," p ["->" e] ("=" e | B)           (* fn *)
+  | "cn" p "," ... "," p          ("=" e | B)           (* cn *)
+  | e  "[" e "]"                                        (* direct-style application *)
   | e "!(" e ")"                                        (* cn application *)
   | e  "(" e ")"                                        (* fn application *)
   | "if" e B ["else" B]                                 (* if *)
@@ -64,13 +67,17 @@ e = ID
   | B                                                   (* block *)
   ;
 
-(* statements *)
-s = n                                                   (* nominal statement *)
-  | "let" p "=" e ";"                                   (* let statement *)
-  | e A_OP e ";"                                        (* assignment statement *)
-  | e ";"                                               (* expression statement *)
-  ;
+B = "{" s ... s [ e ] "}";                              (* block expression *)
+
 ```
+
+## ASCII-Alternatives
+
+## Ambiguities
+
+Ambiguities in the grammar are resolved as follows:
+* A statement beginning with `λ`, `fn`, `cn` is a _nominal statement_.
+* TODO
 
 ## Expressions
 
