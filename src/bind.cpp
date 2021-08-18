@@ -145,7 +145,7 @@ void BottomExpr ::bind(Scopes&  ) const {}
 void ErrExpr    ::bind(Scopes&  ) const {}
 void KeyExpr    ::bind(Scopes&  ) const {}
 void LitExpr    ::bind(Scopes&  ) const {}
-void UnknownExpr::bind(Scopes&  ) const {}
+void UnkExpr    ::bind(Scopes&  ) const {}
 void IdExpr     ::bind(Scopes& s) const { s.use(this); }
 void VarExpr    ::bind(Scopes& s) const { s.use(this); }
 void AbsExpr    ::bind(Scopes& s) const { abs->bind(s); }

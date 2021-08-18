@@ -29,9 +29,9 @@ T = "(" p "," ... "," p ")";                            (* tuple pattern *)
 n = "nom" ID ":" e "=" e                                (* nom nominal *)
   | "struct" ID T* "=" e                                (* struct *)
   | "trait"  ID T* "=" e                                (* trait *)
-  | "λ"  ID T* ["->" e] ("=" e | B)                     (* λ  nominal *)
-  | "fn" ID T* ["->" e] ("=" e | B)                     (* fn nominal *)
-  | "cn" ID T*          ("=" e | B)                     (* cn nominal *)
+  | "λ"  ID T+ ["->" e] ("=" e | B)                     (* λ  nominal *)
+  | "fn" ID T+ ["->" e] ("=" e | B)                     (* fn nominal *)
+  | "cn" ID T+          ("=" e | B)                     (* cn nominal *)
   ;
 
 (* statements *)

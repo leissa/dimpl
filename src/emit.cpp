@@ -38,7 +38,21 @@ void Prg::emit(Emitter& e) const { e.emit_stmts(stmts); }
  * Nom
  */
 
+//(A)(B)(C) -> D {
+//}
+
 void AbsNom::emit_nom(Emitter& /*e*/) const {
+    size_t n = doms.size();
+
+    thorin::Array<thorin::Pi*> pis(n, [&](size_t /*i*/) {
+        //auto t = doms[i]->emit(e);
+        //return e.world().nom_unk(t);
+        return nullptr;
+    });
+
+    for (auto&& dom : doms) {
+        dom->dump();
+    }
 }
 
 void NomNom::emit_nom(Emitter& /*e*/) const {
@@ -104,6 +118,8 @@ void LetStmt::emit(Emitter& e) const {
  * Expr
  */
 
+const thorin::Def* UnkExpr::emit(Emitter& e) const { return e.world().nom_unk(e.dbg(loc)); }
+
 const thorin::Def* AbsExpr::emit(Emitter& e) const {
     abs->emit(e);
     return abs->def;
@@ -139,14 +155,6 @@ const thorin::Def* FieldExpr::emit(Emitter& e) const {
     lhs->emit(e);
     return nullptr;
 }
-
-#if 0
-const thorin::Def* ForallExpr::emit(Emitter& e) const {
-    auto d = domain->emit(e);
-    auto c = codomain->emit(e);
-    return e.world().pi(d, c, loc);
-}
-#endif
 
 const thorin::Def* IdExpr::emit(Emitter&) const { return decl->def; }
 
@@ -211,11 +219,6 @@ const thorin::Def* TupExpr::emit(Emitter& e) const {
     DefArray args(elems.size(), [&](size_t i) { return elems[i]->emit(e); });
     auto t = type->emit(e);
     return e.world().tuple(t, args, e.dbg(loc));
-}
-
-const thorin::Def* UnknownExpr::emit(Emitter& /*e*/) const {
-    //return e.world().unknown(loc);
-    return nullptr;
 }
 
 const thorin::Def* VarExpr::emit(Emitter& /*e*/) const {

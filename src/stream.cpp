@@ -26,7 +26,7 @@ Stream& AbsNom::stream(Stream& s) const {
     s.fmt("{} ", tag);
     if (!id->is_anonymous()) id->stream(s);
     s.fmt("{}", doms);
-    if (!comp.fancy || !isa<UnknownExpr>(codom)) s.fmt(" → {} ", codom);
+    if (!comp.fancy || !isa<UnkExpr>(codom)) s.fmt(" → {} ", codom);
     auto is_block = isa<BlockExpr>(body);
     return s.fmt("{}{}", is_block ? "" : "= ", body);
 }
@@ -75,7 +75,7 @@ Stream& PrefixExpr ::stream(Stream& s) const { return s.fmt("({}{})", tag, rhs);
 Stream& SigExpr    ::stream(Stream& s) const { return s.fmt("[{, }]", elems); }
 Stream& TupElem    ::stream(Stream& s) const { return s.fmt("{}", expr); }
 Stream& TupExpr    ::stream(Stream& s) const { return s.fmt("({, })", elems); }
-Stream& UnknownExpr::stream(Stream& s) const { return s.fmt("<?>"); }
+Stream& UnkExpr    ::stream(Stream& s) const { return s.fmt("<?>"); }
 Stream& VarExpr    ::stream(Stream& s) const { return s.fmt("var {}", id); }
 Stream& WhileExpr  ::stream(Stream& s) const { return s.fmt("while {} {}", cond, body); }
 

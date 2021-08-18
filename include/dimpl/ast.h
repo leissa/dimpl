@@ -51,7 +51,7 @@ namespace dimpl {
     m(KeyExpr)        \
     m(ArExpr)         \
     m(SigExpr)        \
-    m(UnknownExpr)    \
+    m(UnkExpr)        \
     m(VarExpr)        \
     m(WhileExpr)
 
@@ -777,8 +777,8 @@ struct SigExpr : public Expr {
     static constexpr auto Node = Node::SigExpr;
 };
 
-struct UnknownExpr : public Expr {
-    UnknownExpr(Comp& comp, Loc loc)
+struct UnkExpr : public Expr {
+    UnkExpr(Comp& comp, Loc loc)
         : Expr(comp, loc, Node)
     {}
 
@@ -786,7 +786,7 @@ struct UnknownExpr : public Expr {
     void bind(Scopes&) const override;
     const thorin::Def* emit(Emitter&) const override;
 
-    static constexpr auto Node = Node::UnknownExpr;
+    static constexpr auto Node = Node::UnkExpr;
 };
 
 struct VarExpr : public Expr, public Use {

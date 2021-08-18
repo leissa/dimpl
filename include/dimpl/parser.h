@@ -108,10 +108,10 @@ public:
 private:
     /// @name make AST nodes
     //@{
-    Ptr<BlockExpr>    mk_empty_block_expr() { return mk_ptr<BlockExpr>  (prev_, Ptrs<Stmt>{}, mk_unit_tup()); }
-    Ptr<ErrExpr>      mk_error_expr()       { return mk_ptr<ErrExpr>    (prev_); }
-    Ptr<TupExpr>      mk_unit_tup()         { return mk_ptr<TupExpr>    (prev_, Ptrs<TupElem>{}, mk_unknown_expr()); }
-    Ptr<UnknownExpr>  mk_unknown_expr()     { return mk_ptr<UnknownExpr>(prev_); }
+    Ptr<BlockExpr> mk_block_expr() { return mk_ptr<BlockExpr>  (prev_, Ptrs<Stmt>{}, mk_unit_tup()); }
+    Ptr<ErrExpr>   mk_error_expr() { return mk_ptr<ErrExpr>    (prev_); }
+    Ptr<TupExpr>   mk_unit_tup()   { return mk_ptr<TupExpr>    (prev_, Ptrs<TupElem>{}, mk_unk_expr()); }
+    Ptr<UnkExpr>   mk_unk_expr()   { return mk_ptr<UnkExpr>(prev_); }
 
     template<class T, class... Args>
     Ptr<T> mk_ptr(Args&&... args) { return std::make_unique<const T>(comp(), std::forward<Args>(args)...); }

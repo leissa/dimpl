@@ -130,7 +130,7 @@ Ptr<Expr> Parser::parse_type_ascr(const char* ascr_ctxt) {
         return parse_expr("type ascription");
     }
 
-    return accept(Tok::Tag::P_colon) ? parse_expr("type ascription") : mk_unknown_expr();
+    return accept(Tok::Tag::P_colon) ? parse_expr("type ascription") : mk_unk_expr();
 }
 
 /*
@@ -168,7 +168,7 @@ Ptr<AbsNom> Parser::parse_abs_nom() {
     while (ahead().tag() == Tok::Tag::D_paren_l)
         doms.emplace_back(parse_tup_ptrn(Tok::Tag::D_paren_l, Tok::Tag::D_paren_r));
 
-    auto codom = accept(Tok::Tag::P_arrow) ? parse_expr("codomain of an function") : mk_unknown_expr();
+    auto codom = accept(Tok::Tag::P_arrow) ? parse_expr("codomain of an function") : mk_unk_expr();
     auto body = accept(Tok::Tag::A_assign) ? parse_expr("body of a function") : parse_block_expr("body of a function");
     return mk_ptr<AbsNom>(track, tag, std::move(id), std::move(doms), std::move(codom), std::move(body));
 }
@@ -242,7 +242,7 @@ Ptr<IdPtrn> Parser::parse_id_ptrn() {
     auto id = parse_id();
     auto type = accept(Tok::Tag::P_colon)
               ? parse_expr("type ascription of an identifier pattern")
-              : mk_unknown_expr();
+              : mk_unk_expr();
     return mk_ptr<IdPtrn>(track, mut, std::move(id), std::move(type));
 }
 
@@ -380,7 +380,7 @@ Ptr<AbsExpr> Parser::parse_abs_expr() {
     Ptrs<Ptrn> doms;
     doms.emplace_back(mk_ptr<TupPtrn>(p_track, std::move(elems), false));
 
-    auto codom = accept(Tok::Tag::P_arrow) ? parse_expr("codomain of an function") : mk_unknown_expr();
+    auto codom = accept(Tok::Tag::P_arrow) ? parse_expr("codomain of an function") : mk_unk_expr();
     auto body = accept(Tok::Tag::A_assign) ? parse_expr("body of a function") : parse_block_expr("body of a function");
     auto abs_nom = mk_ptr<AbsNom>(track, tag, std::move(id), std::move(doms), std::move(codom), std::move(body));
     return mk_ptr<AbsExpr>(track, std::move(abs_nom));
@@ -389,7 +389,7 @@ Ptr<AbsExpr> Parser::parse_abs_expr() {
 Ptr<BlockExpr> Parser::parse_block_expr(const char* ctxt) {
     if (ctxt && !ahead().isa(Tok::Tag::D_brace_l)) {
         err("block expression", ctxt);
-        return mk_empty_block_expr();
+        return mk_block_expr();
     }
 
     auto track = tracker();
@@ -461,11 +461,11 @@ Ptr<IdExpr> Parser::parse_id_expr() {
 Ptr<IfExpr> Parser::parse_if_expr() {
     auto track = tracker();
     eat(Tok::Tag::K_if);
-    auto cond = parse_expr("condition of an if expression");
-    auto then_expr = parse_block_expr("consequence of an if expression");
+    auto cond = parse_expr("condition of an if-expression");
+    auto then_expr = parse_block_expr("consequence of an if-expression");
     auto else_expr = accept(Tok::Tag::K_else)
-        ? (ahead().isa(Tok::Tag::K_if) ? (Ptr<Expr>)parse_if_expr() : (Ptr<Expr>)parse_block_expr("alternative of an if expression"))
-        : mk_empty_block_expr();
+        ? ahead().isa(Tok::Tag::K_if) ? (Ptr<Expr>)parse_if_expr() : (Ptr<Expr>)parse_block_expr("alternative of an if-expression")
+        : mk_block_expr();
 
     return mk_ptr<IfExpr>(track, std::move(cond), std::move(then_expr), std::move(else_expr));
 }
