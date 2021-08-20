@@ -22,7 +22,7 @@ public:
 
     Comp& comp() { return comp_; }
     void push() { scopes_.emplace_back(); }
-    void pop()  { scopes_.pop_back(); }
+    void pop() { scopes_.pop_back(); }
     void insert(const Decl*);
     void use(const Use*);
     std::optional<const Decl*> find(Sym);
