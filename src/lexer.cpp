@@ -277,7 +277,7 @@ Tok Lexer::parse_literal() {
         }
     }
 
-    if (is_float) return {loc_, s64(strtod  (str().c_str(), nullptr      ))};
+    if (is_float) return {loc_, f64(strtod  (str().c_str(), nullptr      ))};
     if (sign)     return {loc_, u64(strtoll (str().c_str(), nullptr, base))};
     else          return {loc_, u64(strtoull(str().c_str(), nullptr, base))};
 }
