@@ -21,16 +21,6 @@ private:
     Tok parse_literal();
 
     template <typename Pred>
-    std::optional<uint32_t> accept_opt(Pred pred) {
-        if (pred(peek())) {
-            auto ret = peek();
-            next();
-            return {ret};
-        }
-        return std::nullopt;
-    }
-
-    template <typename Pred>
     bool accept_if(Pred pred, bool append = true) {
         if (pred(peek())) {
             if (append) str_.append(peek_bytes_);
@@ -42,13 +32,6 @@ private:
 
     bool accept(uint32_t val, bool append = true) {
         return accept_if([val] (uint32_t p) { return p == val; }, append);
-    }
-
-    bool accept(const char* p, bool append = true) {
-        while (*p != '\0') {
-            if (!accept(*p++, append)) return false;
-        }
-        return true;
     }
 
     uint32_t next();
